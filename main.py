@@ -1,10 +1,12 @@
 from sanic import Sanic, response
-from sanic.log import logger
 from sanic_jinja2 import SanicJinja2
-from sanic.websocket import WebSocketProtocol
+from sanic.websocket import WebSocketProtocol, ConnectionClosed
 import json
 
+from chat_room import Room
+
 app = Sanic()
+room = Room()
 
 jinja = SanicJinja2(app, pkg_path='template')
 
@@ -16,10 +18,23 @@ async def allow_cross_site(request, response):
     response.headers["Access-Control-Allow-Credentials"] = "true"
 
 
-# @app.route("/")
-# async def test(request):
-#     logger.info('main.py')
-#     return json({"hello": "world"})
+# WebSocketServer
+@app.websocket('/')
+async def feed(request, ws):
+    return await response.file('static/index.html')
+
+
+@app.websocket('/chat')
+async def chat(request, ws):
+    room.join(ws)
+    while True:
+        try:
+            message = await ws.recv()
+        except ConnectionClosed:
+            room.leave(ws)
+            break
+        else:
+            await room.send_massage(message)
 
 
 @app.route("/player")
@@ -30,19 +45,6 @@ async def player(request):
         "Category": "Soccer",
     }
 
-
-@app.websocket('/')
-async def feed(request, ws):
-    send_dic = {'id':'seha','msg': 'hello!'}
-    print('Sending: ' + json.dumps(send_dic))
-    await ws.send(json.dumps(send_dic))
-    data = await ws.recv()
-    resonse_dic = {'id':'mc','msg': data}
-    print('Received: ' + str(resonse_dic))
-
-
-
-app.static('/home', 'static/index.html')
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, protocol=WebSocketProtocol)
