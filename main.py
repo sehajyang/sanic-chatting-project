@@ -1,13 +1,12 @@
-from sanic import Sanic, response
+from sanic import Sanic
 from sanic_jinja2 import SanicJinja2
 from sanic.websocket import WebSocketProtocol, ConnectionClosed
-import json
 
-from chat_room import Room
+from config import base_config
+from rooms.chat_room import Room
 
 app = Sanic()
-room = Room()
-
+chat_room = Room()
 jinja = SanicJinja2(app, pkg_path='template')
 
 
@@ -18,32 +17,37 @@ async def allow_cross_site(request, response):
     response.headers["Access-Control-Allow-Credentials"] = "true"
 
 
+# HTTP
+@app.route("/main", methods=['GET'])
+@jinja.template('main.html')
+async def player(request):
+    return {
+        "id": "seha",
+        "name": "sehajyang",
+    }
+
+
+@app.route("/lobby")
+@jinja.template('room_list.html')
+async def player(request):
+    return {
+        "id": "seha",
+        "name": "sehajyang",
+    }
+
+
 # WebSocketServer
-@app.websocket('/')
-async def feed(request, ws):
-    return await response.file('static/index.html')
-
-
-@app.websocket('/chat')
+@app.websocket('/room')
 async def chat(request, ws):
-    room.join(ws)
+    chat_room.join(ws)
     while True:
         try:
             message = await ws.recv()
         except ConnectionClosed:
-            room.leave(ws)
+            chat_room.leave(ws)
             break
         else:
-            await room.send_massage(message)
-
-
-@app.route("/player")
-@jinja.template('player.html')
-async def player(request):
-    return {
-        "Player": "CR7",
-        "Category": "Soccer",
-    }
+            await chat_room.send_massage(message)
 
 
 if __name__ == "__main__":
