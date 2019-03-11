@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/../sanic-example/.idea/sanic-example.iml" filepath="$PROJECT_DIR$/../sanic-example/.idea/sanic-example.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/sanic-toy-project.iml" filepath="$PROJECT_DIR$/.idea/sanic-toy-project.iml" />
     </modules>
   </component>
