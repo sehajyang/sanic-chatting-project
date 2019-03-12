@@ -6,10 +6,10 @@ class Subject:
         self.msg = ""
 
     def register_observer(self, observer):
-        if observer in self._observer:
-            return False
-        self._observer.append(observer)
-        return True
+        if observer not in self._observer:
+            self._observer.append(observer)
+            return True
+        return False
 
     def remove_observer(self, observer):
         if observer in self._observer:
