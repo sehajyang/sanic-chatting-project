@@ -1,17 +1,30 @@
-from abc import ABCMeta, abstractmethod
 
 
 class Subject:
-    __metaclass__ = ABCMeta
+    def __init__(self):
+        super(Subject, self).__init__()
+        self._observer = []
+        self.msg = ""
 
-    @abstractmethod
     def register_observer(self, observer):
-        pass
+        if observer in self._observer:
+            return "already exist observer"
+        self._observer.append(observer)
+        return "register success"
 
-    @abstractmethod
     def remove_observer(self, observer):
-        pass
+        if observer in self._observer:
+            self._observer.remove(observer)
+            return "remove success"
+        return "observer not exist"
 
-    @abstractmethod
     def notify_observer(self):
-        pass
+        for observer in self._observer:
+            observer.update(self.msg)
+
+    def msg_changed(self):
+        self.notify_observer()
+
+    def set_msg(self, msg):
+        self.msg = msg
+        self.msg_changed()

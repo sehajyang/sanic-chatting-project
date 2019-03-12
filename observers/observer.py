@@ -1,20 +1,21 @@
-from abc import abstractmethod
 
 
 class Observer:
-
-    @abstractmethod
     def update(self, msg):
-        pass
+        self.msg = msg
+        self.display()
 
-    @abstractmethod
     def register_subject(self, subject):
-        pass
+        print('subscribing ', subject)
+        self.subject = subject
+        self.subject.register_observer(self)
+        print('subscribing success')
 
-    @abstractmethod
     def unregister_subject(self, subject):
-        pass
+        print('unsubscribing ', subject)
+        self.subject = subject
+        self.subject.remove_observer(self)
+        print('unsubscribing success')
 
-    @abstractmethod
     def display(self):
-        pass
+        print(f'msg{self.msg}')

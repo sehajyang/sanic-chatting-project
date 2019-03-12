@@ -1,11 +1,11 @@
-from observers.concrete_subject import ConcreteSubject
-from observers.concrete_observer import ConcreteObserver
+from observers.subject import Subject
+from observers.observer import Observer
 
 
 def test():
-    sub1 = ConcreteSubject()
-    obs1 = ConcreteObserver()
-    obs2 = ConcreteObserver()
+    sub1 = Subject()
+    obs1 = Observer()
+    obs2 = Observer()
     obs1.register_subject(sub1)
     obs2.register_subject(sub1)
 
