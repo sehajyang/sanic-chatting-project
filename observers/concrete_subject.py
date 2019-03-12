@@ -1,16 +1,16 @@
-from observer.subject import Subject
+from observers.subject import Subject
 
 
-class ConcreteObserver(Subject):
+class ConcreteSubject(Subject):
     def __init__(self):
-        super(ConcreteObserver, self).__init__()
+        super(ConcreteSubject, self).__init__()
         self._observer = []
         self.msg = ""
 
     def register_observer(self, observer):
         if observer in self._observer:
             return "already exist observer"
-        self.register_observer(observer)
+        self._observer.append(observer)
         return "register success"
 
     def remove_observer(self, observer):
@@ -29,6 +29,8 @@ class ConcreteObserver(Subject):
     def set_msg(self, msg):
         self.msg = msg
         self.msg_changed()
+
+
 
 
 
