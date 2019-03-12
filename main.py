@@ -2,7 +2,6 @@ from sanic import Sanic
 from sanic_jinja2 import SanicJinja2
 from sanic.websocket import WebSocketProtocol, ConnectionClosed
 
-from config import base_config
 from rooms.chat_room import Room
 
 app = Sanic()
@@ -52,3 +51,4 @@ async def chat(request, ws):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, protocol=WebSocketProtocol)
+`
