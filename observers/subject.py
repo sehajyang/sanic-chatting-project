@@ -2,21 +2,20 @@
 
 class Subject:
     def __init__(self):
-        super(Subject, self).__init__()
         self._observer = []
         self.msg = ""
 
     def register_observer(self, observer):
         if observer in self._observer:
-            return "already exist observer"
+            return False
         self._observer.append(observer)
-        return "register success"
+        return True
 
     def remove_observer(self, observer):
         if observer in self._observer:
             self._observer.remove(observer)
-            return "remove success"
-        return "observer not exist"
+            return True
+        return False
 
     def notify_observer(self):
         for observer in self._observer:
