@@ -1,14 +1,20 @@
+from abc import abstractmethod
+
+
 class Observer:
-    def __init__(self):
-        self.subscriber = []
-        self.msg = ""
 
-    def notify(self):
-        for sub in self.subscriber:
-            sub.msg = self.msg
+    @abstractmethod
+    def update(self, msg):
+        pass
 
-    def register(self, observer):
-        self.subscriber.append(observer)
+    @abstractmethod
+    def register_subject(self, subject):
+        pass
 
-    def remove(self, observer):
-        self.subscriber.remove(observer)
+    @abstractmethod
+    def unregister_subject(self, subject):
+        pass
+
+    @abstractmethod
+    def display(self):
+        pass
