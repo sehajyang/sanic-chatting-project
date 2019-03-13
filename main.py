@@ -3,6 +3,8 @@ from sanic_jinja2 import SanicJinja2
 from sanic.websocket import WebSocketProtocol, ConnectionClosed
 
 from rooms.chat_room import Room
+from observers.subject import Subject
+from observers.observer import Observer
 
 app = Sanic()
 chat_room = Room()
@@ -38,15 +40,20 @@ async def player(request):
 # WebSocketServer
 @app.websocket('/room')
 async def chat(request, ws):
+    sub = Subject()
+    obs = Observer()
+    obs.register_subject(sub)
     chat_room.join(ws)
     while True:
         try:
             message = await ws.recv()
         except ConnectionClosed:
             chat_room.leave(ws)
+            obs.unregister_subject(ws)
             break
         else:
             await chat_room.send_massage(message)
+            sub.set_msg(message)
 
 
 if __name__ == "__main__":
