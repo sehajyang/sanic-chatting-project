@@ -4,14 +4,17 @@ from sanic.websocket import ConnectionClosed
 class Room:
 
     def __init__(self):
+        # self.sub = Subject()
         self.clients = []
 
     def join(self, client):
         self.clients.append(client)
+        # self.sub.register_observer(client)
 
     def leave(self, client):
         try:
             self.clients.remove(client)
+            # self.sub.remove_observer(client)
         except ValueError:
             pass
 
