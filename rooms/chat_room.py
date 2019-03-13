@@ -1,5 +1,6 @@
 from sanic.websocket import ConnectionClosed
 
+
 class Room:
 
     def __init__(self):

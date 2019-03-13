@@ -6,6 +6,7 @@ from rooms.chat_room import Room
 from observers.subject import Subject
 from observers.observer import Observer
 
+
 app = Sanic()
 chat_room = Room()
 jinja = SanicJinja2(app, pkg_path='template')
@@ -41,10 +42,10 @@ async def player(request):
 @app.websocket('/room')
 async def chat(request, ws):
     sub = Subject()
-    obs = Observer()
-    obs.register_subject(sub)
     chat_room.join(ws)
     while True:
+        obs = Observer()
+        obs.register_subject(sub)
         try:
             message = await ws.recv()
         except ConnectionClosed:
@@ -53,7 +54,7 @@ async def chat(request, ws):
             break
         else:
             await chat_room.send_massage(message)
-            sub.set_msg(message)
+            sub.set_msg('broadcast: ', message)
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@ from observers.subject import Subject
 from observers.observer import Observer
 
 
+
 def test():
     sub1 = Subject()
     obs1 = Observer()
