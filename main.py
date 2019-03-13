@@ -2,14 +2,16 @@ from sanic import Sanic
 from sanic_jinja2 import SanicJinja2
 from sanic.websocket import WebSocketProtocol, ConnectionClosed
 
-from rooms.chat_room import Room
-from observers.subject import Subject
-from observers.observer import Observer
-
+from rooms.room import Room
 
 app = Sanic()
-chat_room = Room()
+room = Room()
 jinja = SanicJinja2(app, pkg_path='template')
+
+
+@app.listener('before_server_start')
+async def setup(app, loop):
+    pass
 
 
 @app.middleware('response')
@@ -39,21 +41,22 @@ async def player(request):
 
 
 # WebSocketServer
-@app.websocket('/room')
-async def chat(request, ws):
-    sub = Subject()
-    chat_room.join(ws)
+@app.websocket('/room/<room_no>')
+async def chat(request, ws, room_no):
+    print(room_no)
+    sub = Room()
+    room.join(ws)
     while True:
         obs = Observer()
         obs.register_subject(sub)
         try:
             message = await ws.recv()
         except ConnectionClosed:
-            chat_room.leave(ws)
+            room.leave(ws)
             obs.unregister_subject(ws)
             break
         else:
-            await chat_room.send_massage(message)
+            await room.send_massage(message)
             sub.set_msg('broadcast: ', message)
 
 

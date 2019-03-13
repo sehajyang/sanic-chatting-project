@@ -1,10 +1,9 @@
-from observers.subject import Subject
-from observers.observer import Observer
+from room.room import Room
 
 
 
 def test():
-    sub1 = Subject()
+    sub1 = Room()
     obs1 = Observer()
     obs2 = Observer()
     obs1.register_subject(sub1)
