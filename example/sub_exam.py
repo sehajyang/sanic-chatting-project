@@ -1,5 +1,4 @@
 import asyncio
-from asyncio_redis.replies import PubSubReply
 
 from room import Room
 

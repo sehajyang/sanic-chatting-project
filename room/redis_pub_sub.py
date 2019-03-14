@@ -1,4 +1,3 @@
-import asyncio
 import asyncio_redis
 import asyncio_redis.connection
 import dotenv
@@ -29,14 +28,4 @@ async def receive_message(subscription: asyncio_redis.protocol.Subscription):
 async def send_message(room_no, message):
     connection = await get_redis_connection()
     await connection.publish('Room:{}'.format(room_no), message)
-
     connection.close()
-
-
-if __name__ == '__main__':
-    async def main():
-        await send_message(10, 'hi')
-
-
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())

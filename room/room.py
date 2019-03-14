@@ -8,28 +8,37 @@ class Room:
         self.is_connected = False
         self.connection = None
         self._subscription = None
+        self.users = []
 
     async def _connect(self):
         self.connection = await redis_pub_sub.get_redis_connection()
         self.is_connected = True
 
-    async def join_room(self):
+    async def join_room(self, user):
         if not self.is_connected:
             await self._connect()
-
+        self.users.append(user)
         self._subscription = await redis_pub_sub.subscribe(self.connection, self.room_no)
 
-    async def leave_room(self):
+    async def leave_room(self, user):
         if not self.is_connected:
             await self._connect()
+        self.users.remove(user)
         await redis_pub_sub.unsubscibe(self._subscription, self.room_no)
 
     async def send_message(self, message):
         if not self.is_connected:
             await self._connect()
+
         return await redis_pub_sub.send_message(self.room_no, message)
 
-    async def receive_message(self) -> asyncio_redis.replies.PubSubReply:
+    async def receive_message(self):
         if not self.is_connected:
             await self._connect()
-        return await redis_pub_sub.receive_message(self._subscription)
+
+        for receiver in self.users:
+            try:
+                message = await redis_pub_sub.receive_message(self._subscription)
+                await receiver.send(str(message.value))
+            except ConnectionError:
+                await self.leave_room(receiver)
