@@ -3,7 +3,7 @@ from sanic_jinja2 import SanicJinja2
 from sanic.websocket import WebSocketProtocol
 import asyncio
 from room import Room
-from ws_jobs import send_ws_channel, receive_ws_channel
+from ws_handle import send_ws_channel, receive_ws_channel
 
 app = Sanic()
 jinja = SanicJinja2(app, pkg_path='template')
