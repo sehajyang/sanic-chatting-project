@@ -1,6 +1,7 @@
 from sanic import Sanic
 from sanic_jinja2 import SanicJinja2
 from sanic.websocket import WebSocketProtocol, ConnectionClosed
+import asyncio
 from room import Room
 
 app = Sanic()
@@ -43,8 +44,6 @@ async def room_create(request, ws, room_no):
     room = Room(room_no)
     await room.join_room(ws)
     print('create room')
-    while True:
-        reply = await room.receive_message()
 
 
 # WebSocketServer
@@ -52,6 +51,20 @@ async def room_create(request, ws, room_no):
 async def chat(request, ws, room_no):
     room = Room(room_no)
     await room.join_room(ws)
+
+    send_task = asyncio.ensure_future(
+        send(ws, room))
+    receive_task = asyncio.ensure_future(
+        receive(room))
+    done, pending = await asyncio.wait(
+        [send_task, receive_task],
+        return_when=asyncio.FIRST_COMPLETED,
+    )
+    for task in pending:
+        task.cancel()
+
+
+async def send(ws, room):
     while True:
         try:
             message = await ws.recv()
@@ -60,6 +73,11 @@ async def chat(request, ws, room_no):
             break
         else:
             await room.send_message(message)
+
+
+async def receive(room):
+    while True:
+        await room.receive_message()
 
 
 if __name__ == "__main__":
