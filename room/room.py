@@ -1,5 +1,6 @@
 from room import redis_pub_sub
 import asyncio_redis.replies
+import json
 
 
 class Room:
@@ -39,6 +40,9 @@ class Room:
         for receiver in self.users:
             try:
                 message = await redis_pub_sub.receive_message(self._subscription)
-                await receiver.send(str(message.value))
+                await receiver.send(str(message))
             except ConnectionError:
                 await self.leave_room(receiver)
+
+    async def users_count(self):
+        return json.dumps({'room_no': self.room_no, 'count': len(self.users)})
