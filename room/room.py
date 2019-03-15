@@ -48,13 +48,10 @@ class Room:
         #         await self.leave_room(message_to_json['receiver_id'])
 
         for user_id, ws in self.users.items():
+            # TODO: WIS, ALL 함수 따로 뺄 것
             try:
-                if message_to_json['receiver_id'] == user_id:
-                    print('wis in')
-                    print(self.users[user_id])
-                    await self.users[user_id].send(str(message.value))
-                else:
-                    await ws.send(str(message.value))
+                await ws.send(str(message.value))
+                print(user_id)
             except ConnectionError:
                 await self.leave_room(user_id)
 
