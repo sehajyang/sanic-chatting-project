@@ -2,7 +2,6 @@ import asyncio_redis
 import asyncio_redis.connection
 import dotenv
 import os
-import json
 
 dotenv.load_dotenv()
 
@@ -28,6 +27,5 @@ async def receive_message(subscription: asyncio_redis.protocol.Subscription):
 
 async def send_message(room_no, message):
     connection = await get_redis_connection()
-    json_values = json.dumps({'message': message})
-    await connection.publish('Room:{}'.format(room_no), str(json_values))
+    await connection.publish('Room:{}'.format(room_no), str(message))
     connection.close()

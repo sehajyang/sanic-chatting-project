@@ -1,4 +1,5 @@
 from room import redis_pub_sub
+from room.message import Message
 import asyncio_redis.replies
 import json
 
@@ -15,10 +16,10 @@ class Room:
         self.connection = await redis_pub_sub.get_redis_connection()
         self.is_connected = True
 
-    async def join_room(self, user):
+    async def join_room(self, user_uuid):
         if not self.is_connected:
             await self._connect()
-        self.users.append(user)
+        self.users.append(user_uuid)
         self._subscription = await redis_pub_sub.subscribe(self.connection, self.room_no)
 
     async def leave_room(self, user):
@@ -40,7 +41,7 @@ class Room:
         for receiver in self.users:
             try:
                 message = await redis_pub_sub.receive_message(self._subscription)
-                await receiver.send(str(message))
+                await receiver.send(str(message.value))
             except ConnectionError:
                 await self.leave_room(receiver)
 
