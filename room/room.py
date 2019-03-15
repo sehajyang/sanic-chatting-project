@@ -1,6 +1,4 @@
 from room import redis_pub_sub
-from room.message import Message
-import asyncio_redis.replies
 import json
 
 
@@ -10,22 +8,22 @@ class Room:
         self.is_connected = False
         self.connection = None
         self._subscription = None
-        self.users = []
+        self.users = {}
 
     async def _connect(self):
         self.connection = await redis_pub_sub.get_redis_connection()
         self.is_connected = True
 
-    async def join_room(self, user_uuid):
+    async def join_room(self, ws, user_id):
         if not self.is_connected:
             await self._connect()
-        self.users.append(user_uuid)
+        self.users[user_id] = ws
         self._subscription = await redis_pub_sub.subscribe(self.connection, self.room_no)
 
-    async def leave_room(self, user):
+    async def leave_room(self, user_id):
         if not self.is_connected:
             await self._connect()
-        self.users.remove(user)
+        del self.users[user_id]
         await redis_pub_sub.unsubscibe(self._subscription, self.room_no)
 
     async def send_message(self, message):
@@ -38,12 +36,27 @@ class Room:
         if not self.is_connected:
             await self._connect()
 
-        for receiver in self.users:
+        message = await redis_pub_sub.receive_message(self._subscription)
+        message_to_json = json.loads(message.value)
+        #
+        # if message_to_json['method'] == 'WIS':
+        #     try:
+        #         print(self.users)
+        #         print(self.users[message_to_json['receiver_id']])
+        #         await self.users[message_to_json['receiver_id']].send(str(message.value))
+        #     except ConnectionError:
+        #         await self.leave_room(message_to_json['receiver_id'])
+
+        for user_id, ws in self.users.items():
             try:
-                message = await redis_pub_sub.receive_message(self._subscription)
-                await receiver.send(str(message.value))
+                if message_to_json['receiver_id'] == user_id:
+                    print('wis in')
+                    print(self.users[user_id])
+                    await self.users[user_id].send(str(message.value))
+                else:
+                    await ws.send(str(message.value))
             except ConnectionError:
-                await self.leave_room(receiver)
+                await self.leave_room(user_id)
 
     async def users_count(self):
         return json.dumps({'room_no': self.room_no, 'count': len(self.users)})

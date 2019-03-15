@@ -4,7 +4,6 @@ from sanic.websocket import WebSocketProtocol
 import asyncio
 from room import Room
 from ws_handle import send_ws_channel, receive_ws_channel
-import uuid
 
 app = Sanic()
 jinja = SanicJinja2(app, pkg_path='template')
@@ -42,13 +41,13 @@ async def player(request):
 
 
 # WebSocketServer
-@app.websocket('/room/<room_no>')
-async def chat(request, ws, room_no):
+@app.websocket('/room/<room_no>/<user_id>')
+async def chat(request, ws, room_no, user_id):
     room = Room(room_no)
-    await room.join_room(ws)
+    await room.join_room(ws, user_id)
 
     send_task = asyncio.ensure_future(
-        send_ws_channel(ws, room))
+        send_ws_channel(ws, room, user_id))
     receive_task = asyncio.ensure_future(
         receive_ws_channel(room))
     done, pending = await asyncio.wait(
