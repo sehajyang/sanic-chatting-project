@@ -1,12 +1,15 @@
 from sanic import Sanic
 from sanic_jinja2 import SanicJinja2
 from sanic.websocket import WebSocketProtocol
+from sanic.response import text
 import asyncio
 from room import Room
 from ws_handle import send_ws_channel, receive_ws_channel
+import sanic_session
 
 app = Sanic()
 jinja = SanicJinja2(app, pkg_path='template')
+sanic_session.install_middleware(app, 'InMemorySessionInterface')
 
 
 @app.listener('before_server_start')
@@ -25,10 +28,13 @@ async def allow_cross_site(request, response):
 @app.route("/main", methods=['GET'])
 @jinja.template('main.html')
 async def player(request):
-    return {
-        "id": "seha",
-        "name": "sehajyang",
-    }
+    if not request['session'].get('user_session'):
+        request['session']['user_session'] = 0
+
+    request['session']['user_session'] += 1
+
+    print(text(request['session']['user_session']))
+    return text(request['session']['user_session'])
 
 
 @app.route("/lobby")
@@ -41,8 +47,10 @@ async def player(request):
 
 
 # WebSocketServer
-@app.websocket('/room/<room_no>/<user_id>')
-async def chat(request, ws, room_no, user_id):
+@app.websocket('/room/<room_no>/')
+async def chat(request, ws, room_no):
+    # FIXME: user_id
+    user_id = '1'
     room = Room(room_no)
     await room.join_room(ws, user_id)
 
