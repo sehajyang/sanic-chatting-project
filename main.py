@@ -51,9 +51,10 @@ async def player(request):
 async def chat(request, ws, room_no, user_id):
     # FIXME: user_id
     room = Room(room_no)
+    my_room = Room(room_no + ':' + user_id)
 
-    await room.join_room(ws, room_no)
-    # await room.join_room(ws, room_user)
+    await room.join_room(ws, user_id)
+    await my_room.join_room(ws, user_id)
 
     # user_session = request['session']['user_session']
 
@@ -61,30 +62,21 @@ async def chat(request, ws, room_no, user_id):
         send_ws_channel(ws, room, user_id))
     receive_task = asyncio.ensure_future(
         receive_ws_channel(room))
+    receive_my_room_task = asyncio.ensure_future(
+        receive_ws_channel(my_room))
     done, pending = await asyncio.wait(
-        [send_task, receive_task],
+        [send_task, receive_task, receive_my_room_task],
         return_when=asyncio.FIRST_COMPLETED,
     )
     for task in pending:
         task.cancel()
 
 
-@app.websocket('/user/<room_no>/<user_id>')
-async def chat(request, ws, room_no, user_id):
+@app.websocket('/user/<room_no>/<target_id>')
+async def chat(request, ws, room_no, target_id):
     # FIXME: user_id
-    room = Room(room_no)
-    await room.join_room(ws, room_no)
-
-    send_task = asyncio.ensure_future(
-        send_ws_channel(ws, room, user_id))
-    receive_task = asyncio.ensure_future(
-        receive_ws_channel(room))
-    done, pending = await asyncio.wait(
-        [send_task, receive_task],
-        return_when=asyncio.FIRST_COMPLETED,
-    )
-    for task in pending:
-        task.cancel()
+    my_room = Room(room_no + ':' + target_id)
+    await send_ws_channel(ws, my_room, target_id)
 
 
 if __name__ == "__main__":

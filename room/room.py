@@ -38,18 +38,8 @@ class Room:
             await self._connect()
 
         message = await redis_pub_sub.receive_message(self._subscription)
-        message_to_json = json.loads(message.value)
-
-        # if message_to_json['method'] == 'WIS':
-        #     try:
-        #         print(self.users)
-        #         print(self.users[message_to_json['receiver_id']])
-        #         await self.users[message_to_json['receiver_id']].send(str(message.value))
-        #     except ConnectionError:
-        #         await self.leave_room(message_to_json['receiver_id'])
 
         for user_id, ws in self.users.items():
-            # TODO: WIS, ALL 함수 따로 뺄 것
             try:
                 await ws.send(str(message.value))
                 print(user_id)
