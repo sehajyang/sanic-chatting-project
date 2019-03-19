@@ -8,6 +8,7 @@ class Room:
         self.is_connected = False
         self.connection = None
         self._subscription = None
+        # FIXME: users redis에 넣기
         self.users = {}
 
     async def _connect(self):
@@ -18,13 +19,13 @@ class Room:
         if not self.is_connected:
             await self._connect()
         self.users[user_id] = ws
-        self._subscription = await redis_pub_sub.subscribe(self.connection, self.room_no)
+        self._subscription = await redis_pub_sub.subscribe_room(self.connection, self.room_no)
 
     async def leave_room(self, user_id):
         if not self.is_connected:
             await self._connect()
         del self.users[user_id]
-        await redis_pub_sub.unsubscibe(self._subscription, self.room_no)
+        await redis_pub_sub.unsubscibe_room(self._subscription, self.room_no)
 
     async def send_message(self, message):
         if not self.is_connected:
@@ -38,7 +39,7 @@ class Room:
 
         message = await redis_pub_sub.receive_message(self._subscription)
         message_to_json = json.loads(message.value)
-        #
+
         # if message_to_json['method'] == 'WIS':
         #     try:
         #         print(self.users)
