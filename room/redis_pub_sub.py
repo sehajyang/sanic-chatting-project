@@ -13,12 +13,12 @@ async def get_redis_connection():
 
 async def subscribe_room(connection, room_no):
     subscription = await connection.start_subscribe()
-    await subscription.subscribe(['Room:{}'.format(room_no)])
+    await subscription.subscribe(['Channel:{}'.format(room_no)])
     return subscription
 
 
 async def unsubscibe_room(subscription: asyncio_redis.protocol.Subscription, room_no):
-    await subscription.unsubscribe(['Room:{}'.format(room_no)])
+    await subscription.unsubscribe(['Channel:{}'.format(room_no)])
 
 
 async def receive_message(subscription: asyncio_redis.protocol.Subscription):
@@ -27,5 +27,5 @@ async def receive_message(subscription: asyncio_redis.protocol.Subscription):
 
 async def send_message(room_no, message):
     connection = await get_redis_connection()
-    await connection.publish('Room:{}'.format(room_no), str(message))
+    await connection.publish('Channel:{}'.format(room_no), str(message))
     connection.close()

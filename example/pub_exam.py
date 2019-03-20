@@ -2,6 +2,7 @@ import asyncio
 
 from room import Room
 
+# FIXME:error
 if __name__ == '__main__':
     async def main():
         room = Room(10)

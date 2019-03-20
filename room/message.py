@@ -1,20 +1,26 @@
 import json
-import uuid
 
 
 class Message:
 
-    def __init__(self, receiver, seq, method, message):
-        self.receiver_id = receiver
-        self.seq = seq
-        self.method = method
-        self.message = message
+    def __init__(self, receive_data):
+        self.from_id = receive_data['from_id']
+        self.seq = receive_data['seq']
+        self.message = receive_data['message']
 
     def message_json(self):
         message_to_json = {
-            'receiver_id': self.receiver_id,
+            'from_id': self.from_id,
             'seq': self.seq,
-            'method': self.method,
+            'message': self.message
+        }
+
+        return json.dumps(message_to_json)
+
+    def message_json_set_from_id(self, from_id):
+        message_to_json = {
+            'from_id': from_id,
+            'seq': self.seq,
             'message': self.message
         }
 
