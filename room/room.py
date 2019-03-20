@@ -21,6 +21,7 @@ class Room:
         self.users[user_id] = ws
         self._subscription = await redis_pub_sub.subscribe_room(self.connection, self.room_no)
 
+    # FIXME:27라인 같은 유저 있을경우 동작은 하되 오류임
     async def leave_room(self, user_id):
         if not self.is_connected:
             await self._connect()
@@ -33,6 +34,18 @@ class Room:
 
         return await redis_pub_sub.send_message(self.room_no, message)
 
+    async def send_message_to_user(self, from_id, message):
+        if not self.is_connected:
+            await self._connect()
+        room_no = str(self.room_no)[:str(self.room_no).find(":")]
+        return await redis_pub_sub.send_message(room_no + ":" + from_id, message)
+
+    async def send_notify(self, user_id, message):
+        if not self.is_connected:
+            await self._connect()
+
+        return await redis_pub_sub.send_message(self.room_no + ":" + user_id, message)
+
     async def receive_message(self):
         if not self.is_connected:
             await self._connect()
@@ -42,9 +55,18 @@ class Room:
         for user_id, ws in self.users.items():
             try:
                 await ws.send(str(message.value))
-                print(user_id)
             except ConnectionError:
                 await self.leave_room(user_id)
 
     async def users_count(self):
+        if not self.is_connected:
+            await self._connect()
         return json.dumps({'room_no': self.room_no, 'count': len(self.users)})
+
+# TODO: redis 에 user 넣을것... 지금으론 안됨
+    async def user_list(self):
+        if not self.is_connected:
+            await self._connect()
+        for item in self.users.items():
+            print(item)
+        return json.dumps({'user_list': str(self.users.keys())})

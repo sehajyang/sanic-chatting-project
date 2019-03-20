@@ -4,7 +4,7 @@ from sanic.websocket import WebSocketProtocol
 from sanic.response import text
 import asyncio
 from room import Room
-from ws_handle import send_ws_channel, receive_ws_channel
+from ws_handle import send_ws_channel, receive_ws_channel, send_ws_channel_notify
 import sanic_session
 
 app = Sanic()
@@ -25,7 +25,7 @@ async def allow_cross_site(request, response):
 
 
 # HTTP
-@app.route("/main", methods=['GET'])
+@app.route("/", methods=['GET'])
 @jinja.template('main.html')
 async def player(request):
     if not request['session'].get('user_session'):
@@ -47,11 +47,11 @@ async def player(request):
 
 
 # WebSocketServer
-@app.websocket('/room/<room_no>/<user_id>')
-async def chat(request, ws, room_no, user_id):
-    # FIXME: user_id
+@app.websocket('/rooms/<room_no>/<user_id>')
+async def room_chat(request, ws, room_no, user_id):
+    # FIXME: user_id -> get session_id
     room = Room(room_no)
-    my_room = Room(room_no + ':' + user_id)
+    my_room = Room(room_no + ":" + user_id)
 
     await room.join_room(ws, user_id)
     await my_room.join_room(ws, user_id)
@@ -62,21 +62,36 @@ async def chat(request, ws, room_no, user_id):
         send_ws_channel(ws, room, user_id))
     receive_task = asyncio.ensure_future(
         receive_ws_channel(room))
-    receive_my_room_task = asyncio.ensure_future(
+    my_room_receive_task = asyncio.ensure_future(
         receive_ws_channel(my_room))
     done, pending = await asyncio.wait(
-        [send_task, receive_task, receive_my_room_task],
+        [send_task, receive_task, my_room_receive_task],
         return_when=asyncio.FIRST_COMPLETED,
     )
     for task in pending:
         task.cancel()
 
 
-@app.websocket('/user/<room_no>/<target_id>')
-async def chat(request, ws, room_no, target_id):
+# send whisper message
+@app.websocket('/users/<room_no>/<user_id>')
+async def user_chat(request, ws, room_no, user_id):
     # FIXME: user_id
-    my_room = Room(room_no + ':' + target_id)
-    await send_ws_channel(ws, my_room, target_id)
+    my_room = Room(room_no + ":" + user_id)
+
+    await my_room.join_room(ws, user_id)
+    await send_ws_channel(ws, my_room, user_id)
+
+
+# user list send
+# FIXME: room_chat url의 user_id 삭제시 아래 url /rooms/<room_no>/<users>로 변경
+# FIXME: 아래 user_id test용
+@app.websocket('/rooms/<room_no>/users/<user_id>')
+async def user_list(request, ws, room_no, user_id):
+    # FIXME: user_id
+    my_room = Room(room_no)
+
+    await my_room.join_room(ws, user_id)
+    await send_ws_channel_notify(ws, my_room, user_id)
 
 
 if __name__ == "__main__":
