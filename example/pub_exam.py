@@ -6,7 +6,7 @@ from room import Room
 if __name__ == '__main__':
     async def main():
         room = Room(10)
-        await room.join_room()
+        await room.join_room(ws,user_id)
         await room.send_message('hello!')
 
 
