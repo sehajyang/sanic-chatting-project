@@ -19,10 +19,12 @@ class Room:
         if not self.is_connected:
             await self._connect()
         self.users[user_id] = ws
+        print('join_room : ', self.users)
         self._subscription = await redis_pub_sub.subscribe_room(self.connection, self.room_no)
 
     # FIXME:27라인 같은 유저 있을경우 동작은 하되 오류임
     async def leave_room(self, user_id):
+        print('leave room')
         if not self.is_connected:
             await self._connect()
         del self.users[user_id]
@@ -37,13 +39,15 @@ class Room:
     async def send_message_to_user(self, from_id, message):
         if not self.is_connected:
             await self._connect()
-        room_no = str(self.room_no)[:str(self.room_no).find(":")]
-        return await redis_pub_sub.send_message(room_no + ":" + from_id, message)
+        # room_no = str(self.room_no)[:str(self.room_no).find(":")]
+        # return await redis_pub_sub.send_message(room_no + ":" + from_id, message)
+        print(self.users.keys())
+        return await self.users[from_id].send(str(message))
 
-    async def send_notify(self, user_id):
+    async def send_info(self, user_id):
         if not self.is_connected:
             await self._connect()
-
+        # XXX: 자기자신만 나오고있음
         for item in self.users.items():
             print(item)
 

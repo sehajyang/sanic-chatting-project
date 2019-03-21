@@ -22,7 +22,7 @@ async def ws_room_send_chat(ws, room, my_room, user_id):
 
             elif 'query' in receive_data:
                 print('noti chat')
-                await room.send_notify(user_id)
+                await room.send_info(user_id)
 
             else:
                 print('room chat')
