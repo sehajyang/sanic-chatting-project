@@ -1,3 +1,3 @@
-from .ws_send_receive import receive_ws_channel, send_ws_channel, send_ws_channel_notify
+from .ws_send_receive import receive_ws_channel, ws_room_send_chat
 
-__all__ = ["receive_ws_channel", "send_ws_channel", "send_ws_channel_notify"]
+__all__ = ["receive_ws_channel", "ws_room_send_chat"]
