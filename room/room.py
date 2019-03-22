@@ -7,6 +7,7 @@ class Room:
         self.room_no = room_no
         self.is_connected = False
         self.connection = None
+        self.protocol = None
         self._subscription = None
         # FIXME: users redis에 넣기
         self.users = {}
@@ -14,12 +15,14 @@ class Room:
     async def _connect(self):
         self.connection = await redis_pub_sub.get_redis_connection()
         self.is_connected = True
+        self.protocol = await redis_pub_sub.get_redis_protocol()
 
     async def join_room(self, ws, user_id):
         if not self.is_connected:
             await self._connect()
-        self.users[user_id] = ws
-        print('join_room : ', self.users)
+
+        await self.protocol.set(user_id, ws)
+        # close?
         self._subscription = await redis_pub_sub.subscribe_room(self.connection, self.room_no)
 
     # FIXME:27라인 같은 유저 있을경우 동작은 하되 오류임
@@ -27,7 +30,8 @@ class Room:
         print('leave room')
         if not self.is_connected:
             await self._connect()
-        del self.users[user_id]
+
+        self.connection.delete([user_id])
         await redis_pub_sub.unsubscibe_room(self._subscription, self.room_no)
 
     async def send_message(self, message):
@@ -60,8 +64,18 @@ class Room:
             await self._connect()
 
         message = await redis_pub_sub.receive_message(self._subscription)
+        #XXX :
+        cursor = await self.protocol.scan(match='*')
+        users = {}
+        while True:
+            item = await cursor.fetchone()
+            if item is None:
+                break
+            else:
+                print(users)
+                users = item
 
-        for user_id, ws in self.users.items():
+        for user_id, ws in users:
             try:
                 await ws.send(str(message.value))
             except ConnectionError:
@@ -72,4 +86,3 @@ class Room:
             await self._connect()
 
         return json.dumps({'room_no': self.room_no, 'count': len(self.users)})
-

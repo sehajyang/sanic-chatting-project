@@ -1,9 +1,16 @@
 import asyncio_redis
 import asyncio_redis.connection
+import asyncio_redis.protocol
 import dotenv
 import os
 
 dotenv.load_dotenv()
+
+
+async def get_redis_protocol():
+    return await asyncio_redis.Connection.create(host=os.environ['REDIS_HOST'],
+                                                 port=int(os.environ['REDIS_PORT']),
+                                                 protocol_class=asyncio_redis.protocol.RedisProtocol)
 
 
 async def get_redis_connection():
