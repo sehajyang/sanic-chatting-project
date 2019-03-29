@@ -7,3 +7,6 @@ front-end : Vue
 back-end : Python(sanic)  
 DB : Redis  
 IDE : PyCharm  
+
+## Doc
+[API Doc](https://github.com/sehajyang/sanic-toy-project/wiki)
