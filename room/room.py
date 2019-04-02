@@ -11,17 +11,17 @@ class Room:
         self._subscription = None
         # FIXME: users redis에 넣기
         self.users = {}
+        self.pipe = None
 
     async def _connect(self):
         self.connection = await redis_pub_sub.get_redis_connection()
         self.is_connected = True
-        self.protocol = await redis_pub_sub.get_redis_protocol()
 
     async def join_room(self, ws, user_id):
         if not self.is_connected:
             await self._connect()
 
-        await self.protocol.set(user_id, ws)
+        await self.connection.set(user_id, str(ws))
         # close?
         self._subscription = await redis_pub_sub.subscribe_room(self.connection, self.room_no)
 
@@ -43,6 +43,7 @@ class Room:
     async def send_message_to_user(self, from_id, message):
         if not self.is_connected:
             await self._connect()
+        # FIXME:
         # room_no = str(self.room_no)[:str(self.room_no).find(":")]
         # return await redis_pub_sub.send_message(room_no + ":" + from_id, message)
         print(self.users.keys())
@@ -51,7 +52,6 @@ class Room:
     async def send_info(self, user_id):
         if not self.is_connected:
             await self._connect()
-        # XXX: 자기자신만 나오고있음
         for item in self.users.items():
             print(item)
 
@@ -64,8 +64,9 @@ class Room:
             await self._connect()
 
         message = await redis_pub_sub.receive_message(self._subscription)
-        #XXX :
-        cursor = await self.protocol.scan(match='*')
+        # XXX :
+        cursor = await self.connection.select(0)
+        print("cursor", cursor)
         users = {}
         while True:
             item = await cursor.fetchone()

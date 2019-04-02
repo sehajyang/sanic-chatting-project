@@ -7,12 +7,6 @@ import os
 dotenv.load_dotenv()
 
 
-async def get_redis_protocol():
-    return await asyncio_redis.Connection.create(host=os.environ['REDIS_HOST'],
-                                                 port=int(os.environ['REDIS_PORT']),
-                                                 protocol_class=asyncio_redis.protocol.RedisProtocol)
-
-
 async def get_redis_connection():
     return await asyncio_redis.Connection.create(host=os.environ['REDIS_HOST'],
                                                  port=int(os.environ['REDIS_PORT']))
@@ -36,3 +30,13 @@ async def send_message(channel, message):
     connection = await get_redis_connection()
     await connection.publish('Channel:{}'.format(channel), str(message))
     connection.close()
+
+
+async def send_room_list():
+    connection = await get_redis_connection()
+    return await connection.pubsub_channels_aslist()
+
+
+async def send_room_user_count(channel):
+    connection = await get_redis_connection()
+    return await connection.pubsub_numsub_asdict('Channel:{}'.format(channel))
