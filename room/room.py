@@ -1,6 +1,4 @@
-from room import redis_pub_sub
-from redis_handle import redis_set_get
-import json
+from redis_handle import redis_set_get, redis_pub_sub
 
 
 class Room:

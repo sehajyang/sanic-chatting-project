@@ -1,4 +1,4 @@
-from room import redis_pub_sub
+from redis_handle import redis_pub_sub
 
 
 async def set_hash_data(connection, hash_title, key, value):
