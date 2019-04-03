@@ -1,5 +1,6 @@
 from sanic.websocket import ConnectionClosed
 from room.message import Message
+from redis_handle import redis_set_get
 import json
 
 
@@ -11,6 +12,8 @@ async def ws_room_send_chat(ws, room, my_room, user_id):
         except ConnectionClosed:
             await room.leave_room(user_id)
             await my_room.leave_room(user_id)
+            await redis_set_get.del_hash_keys(room.connection, room.room_no, user_id)
+            await redis_set_get.del_hash_keys(room.connection, my_room.room_no, user_id)
             break
 
         else:
@@ -22,7 +25,10 @@ async def ws_room_send_chat(ws, room, my_room, user_id):
 
             elif 'query' in receive_data:
                 print('noti chat')
-                await room.send_info(user_id)
+                if receive_data['query'] == 'user_list':
+                    await room.send_user_list()
+                if receive_data['query'] == 'user_count':
+                    await room.send_user_count()
 
             else:
                 print('room chat')

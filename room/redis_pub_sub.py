@@ -30,13 +30,3 @@ async def send_message(channel, message):
     connection = await get_redis_connection()
     await connection.publish('Channel:{}'.format(channel), str(message))
     connection.close()
-
-
-async def send_room_list():
-    connection = await get_redis_connection()
-    return await connection.pubsub_channels_aslist()
-
-
-async def send_room_user_count(channel):
-    connection = await get_redis_connection()
-    return await connection.pubsub_numsub_asdict('Channel:{}'.format(channel))
