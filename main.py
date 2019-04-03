@@ -47,14 +47,14 @@ async def player(request):
 
 
 # WebSocketServer
-@app.websocket('/rooms/<room_no>/<user_id>')
-async def room_chat(request, ws, room_no, user_id):
+@app.websocket('/rooms/<room_no>/<user_id>/<user_name>')
+async def room_chat(request, ws, room_no, user_id, user_name):
     # FIXME: user_id -> get session_id
     room = Room(room_no)
     my_room = Room(room_no + ":" + user_id)
 
-    await room.join_room(ws, user_id)
-    await my_room.join_room(ws, user_id)
+    await room.join_room(user_id, user_name)
+    await my_room.join_room(user_id, user_name)
 
     # user_session = request['session']['user_session']
 

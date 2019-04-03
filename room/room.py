@@ -1,5 +1,5 @@
 from room import redis_pub_sub
-import json
+from redis_handle import redis_set_get
 
 
 class Room:
@@ -10,29 +10,26 @@ class Room:
         self.protocol = None
         self._subscription = None
         # FIXME: users redis에 넣기
-        self.users = {}
-        self.pipe = None
+        self.user_id = ""
 
     async def _connect(self):
         self.connection = await redis_pub_sub.get_redis_connection()
         self.is_connected = True
 
-    async def join_room(self, ws, user_id):
+    async def join_room(self, user_id, user_name):
         if not self.is_connected:
             await self._connect()
-
-        await self.connection.set(user_id, str(ws))
-        # close?
+        self.user_id = user_id
+        await redis_set_get.set_hash_data(self.connection, self.room_no, user_id, user_name)
         self._subscription = await redis_pub_sub.subscribe_room(self.connection, self.room_no)
 
-    # FIXME:27라인 같은 유저 있을경우 동작은 하되 오류임
     async def leave_room(self, user_id):
         print('leave room')
         if not self.is_connected:
             await self._connect()
 
-        self.connection.delete([user_id])
         await redis_pub_sub.unsubscibe_room(self._subscription, self.room_no)
+        await redis_set_get.del_hash_keys(self.connection, self.room_no, user_id)
 
     async def send_message(self, message):
         if not self.is_connected:
@@ -46,16 +43,14 @@ class Room:
         # FIXME:
         # room_no = str(self.room_no)[:str(self.room_no).find(":")]
         # return await redis_pub_sub.send_message(room_no + ":" + from_id, message)
-        print(self.users.keys())
+
         return await self.users[from_id].send(str(message))
 
-    async def send_info(self, user_id):
+    async def send_user_list(self, user_id):
         if not self.is_connected:
             await self._connect()
-        for item in self.users.items():
-            print(item)
 
-        message = json.dumps({'user_list': str(self.users.keys())})
+        message = await redis_set_get.get_hash_all_value(self.connection, self.room_no)
 
         return await redis_pub_sub.send_message(self.room_no + ":" + user_id, message)
 
@@ -63,27 +58,17 @@ class Room:
         if not self.is_connected:
             await self._connect()
 
-        message = await redis_pub_sub.receive_message(self._subscription)
-        # XXX :
-        cursor = await self.connection.select(0)
-        print("cursor", cursor)
-        users = {}
         while True:
-            item = await cursor.fetchone()
-            if item is None:
-                break
-            else:
-                print(users)
-                users = item
-
-        for user_id, ws in users:
             try:
-                await ws.send(str(message.value))
+                message = await redis_pub_sub.receive_message(self._subscription)
+                await redis_pub_sub.send_message(self.room_no, message.value)
             except ConnectionError:
-                await self.leave_room(user_id)
+                print('connection error1')
+                await redis_pub_sub.unsubscibe_room(self._subscription, self.room_no)
+                await redis_set_get.del_hash_keys(self.connection, self.room_no, self.user_id)
 
     async def users_count(self):
         if not self.is_connected:
             await self._connect()
 
-        return json.dumps({'room_no': self.room_no, 'count': len(self.users)})
+        return await redis_set_get.get_hash_data_len(self.connection, self.room_no)
