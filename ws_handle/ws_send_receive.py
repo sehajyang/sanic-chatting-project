@@ -29,6 +29,6 @@ async def ws_room_send_chat(ws, room, my_room, user_id):
                 await room.send_message(receive_data)
 
 
-async def receive_ws_channel(room):
+async def receive_ws_channel(room, ws):
     while True:
-        await room.receive_message()
+        await room.receive_message(ws)

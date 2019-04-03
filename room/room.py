@@ -54,14 +54,14 @@ class Room:
 
         return await redis_pub_sub.send_message(self.room_no + ":" + user_id, message)
 
-    async def receive_message(self):
+    async def receive_message(self, ws):
         if not self.is_connected:
             await self._connect()
 
         while True:
             try:
                 message = await redis_pub_sub.receive_message(self._subscription)
-                await redis_pub_sub.send_message(self.room_no, message.value)
+                await ws.send(str(message.value))
             except ConnectionError:
                 print('connection error1')
                 await redis_pub_sub.unsubscibe_room(self._subscription, self.room_no)
