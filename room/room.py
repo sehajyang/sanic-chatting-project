@@ -40,11 +40,8 @@ class Room:
     async def send_message_to_user(self, from_id, message):
         if not self.is_connected:
             await self._connect()
-        # FIXME:
-        # room_no = str(self.room_no)[:str(self.room_no).find(":")]
-        # return await redis_pub_sub.send_message(room_no + ":" + from_id, message)
-
-        return await self.users[from_id].send(str(message))
+        room_no = str(self.room_no)[:str(self.room_no).find(":")]
+        return await redis_pub_sub.send_message(room_no + ":" + from_id, message)
 
     async def send_user_list(self, user_id):
         if not self.is_connected:
