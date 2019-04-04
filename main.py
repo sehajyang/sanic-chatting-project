@@ -58,15 +58,12 @@ async def room_chat(request, ws, room_no, user_id, user_name):
 
     # user_session = request['session']['user_session']
 
-    send_task = asyncio.ensure_future(
-        ws_room_send_chat(ws, room, my_room, user_id))
-    receive_task = asyncio.ensure_future(
-        receive_ws_channel(room, ws))
-    my_room_receive_task = asyncio.ensure_future(
-        receive_ws_channel(my_room, ws))
+    send_task = asyncio.ensure_future(ws_room_send_chat(ws, room, my_room, user_id))
+    receive_task = asyncio.ensure_future(receive_ws_channel(room, ws))
+    my_room_receive_task = asyncio.ensure_future(receive_ws_channel(my_room, ws))
     done, pending = await asyncio.wait(
         [send_task, receive_task, my_room_receive_task],
-        return_when=asyncio.FIRST_COMPLETED,
+        return_when=asyncio.FIRST_COMPLETED
     )
     for task in pending:
         task.cancel()
