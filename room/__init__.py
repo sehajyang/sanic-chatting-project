@@ -1,4 +1,4 @@
 from .room import Room
-from .message import Message
+from .response_message import ResponseMessage
 
-__all__ = ['Room', 'Message']
+__all__ = ['Room', 'ResponseMessage']

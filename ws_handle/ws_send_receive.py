@@ -1,5 +1,5 @@
 from sanic.websocket import ConnectionClosed
-from room.message import Message
+from room.response_message import ResponseMessage
 from redis_handle import redis_set_get
 import json
 
@@ -19,8 +19,8 @@ async def ws_room_send_chat(ws, room, my_room, user_id):
         else:
             if 'from_id' in receive_data:
                 print('wispher chat')
-                msg = Message(receive_data)
-                data_set_from_id = msg.message_json_for_whisper(user_id)
+                msg = ResponseMessage(receive_data)
+                data_set_from_id = msg.make_whisper_message(user_id)
                 await my_room.send_message_to_user(receive_data['from_id'], data_set_from_id)
 
             elif 'query' in receive_data:
