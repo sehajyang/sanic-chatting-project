@@ -31,15 +31,14 @@ class ResponseMessage:
         }
         return json.dumps(message_to_json)
 
-    def make_room_info(self, user_list, user_count):
+    def make_room_info(user_list, user_count):
         message_to_json = {
-            'seq': self.seq,
             'user_list': user_list,
             'user_count': user_count
         }
         return json.dumps(message_to_json)
 
-    def make_deleted_sign(self, room_no):
+    def make_deleted_sign(room_no):
         message_to_json = {
             'room_no': room_no,
             'room_status': room_constants.ROOM_DEL_STATUS,

@@ -25,10 +25,7 @@ async def ws_room_send_chat(ws, room, my_room, user_id):
 
             elif 'query' in receive_data:
                 print('noti chat')
-                if receive_data['query'] == 'user_list':
-                    await room.send_user_list()
-                if receive_data['query'] == 'user_count':
-                    await room.send_user_count()
+                await room.notify_room_info('room_info')
 
             else:
                 print('room chat')

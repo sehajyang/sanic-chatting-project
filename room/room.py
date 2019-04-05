@@ -1,4 +1,8 @@
 from redis_handle import redis_set_get, redis_pub_sub
+from room import ResponseMessage
+from channel import Channel
+
+import json
 
 
 class Room:
@@ -22,6 +26,7 @@ class Room:
         self.user_id = user_id
         await redis_set_get.set_hash_data(self.connection, self.room_no, user_id, user_name)
         self._subscription = await redis_pub_sub.subscribe_room(self.connection, self.room_no)
+        await Room.notify_room_info(self, 'room_info')
 
     async def leave_room(self, user_id):
         print('leave room')
@@ -30,6 +35,7 @@ class Room:
 
         await redis_pub_sub.unsubscibe_room(self._subscription, self.room_no)
         await redis_set_get.del_hash_keys(self.connection, self.room_no, user_id)
+        await Room.notify_room_info(self, 'room_info')
 
     async def send_message(self, message):
         if not self.is_connected:
@@ -44,22 +50,6 @@ class Room:
         room_no = str(self.room_no)[:str(self.room_no).find(":")]
         return await redis_pub_sub.send_message(room_no + ":" + from_id, message)
 
-    async def send_user_list(self):
-        if not self.is_connected:
-            await self._connect()
-
-        dict_reply = await redis_set_get.get_hash_all_value(self.room_no)
-
-        return await redis_pub_sub.send_message(self.room_no, dict_reply)
-
-    async def send_user_count(self):
-        if not self.is_connected:
-            await self._connect()
-
-        message = await redis_set_get.get_hash_data_len(self.room_no)
-
-        return await redis_pub_sub.send_message(self.room_no, str(message))
-
     async def receive_message(self, ws):
         if not self.is_connected:
             await self._connect()
@@ -72,6 +62,22 @@ class Room:
                 await redis_pub_sub.unsubscibe_room(self._subscription, self.room_no)
                 await redis_set_get.del_hash_keys(self.connection, self.room_no, self.user_id)
 
-    async def notify_room_info(self):
-        pass
+    async def notify_room_info(self, notify_data_kind):
+        if not self.is_connected:
+            await self._connect()
 
+        message = ""
+
+        if notify_data_kind is 'room_info':
+            user_list = await Channel.send_channel_key_list(self.connection)
+            user_count = await Channel.send_channel_key_count(self.connection)
+            message = ResponseMessage.make_room_info(user_list, user_count)
+
+        elif notify_data_kind is 'rooms_lobby_data':
+            pass
+        # Room 이름 Channel로 바꿔야 될 것 같은데
+
+        elif notify_data_kind is 'room_deleted':
+            message = ResponseMessage.make_deleted_sign(self.room_no)
+
+        await redis_pub_sub.send_message(self.room_no, str(message))
