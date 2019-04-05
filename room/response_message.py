@@ -1,4 +1,5 @@
 import json
+from room import room_constants
 
 
 class ResponseMessage:
@@ -22,8 +23,27 @@ class ResponseMessage:
         }
         return json.dumps(message_to_json)
 
-    def make_room_info(self):
-        pass
+    def make_lobby_info(self, room_list, room_count):
+        message_to_json = {
+            'seq': self.seq,
+            'room_list': room_list,  # k: room_no, v: title
+            'user_count': room_count
+        }
+        return json.dumps(message_to_json)
 
-    def make_deleted_sign(self):
-        pass
+    def make_room_info(self, user_list, user_count):
+        message_to_json = {
+            'seq': self.seq,
+            'user_list': user_list,
+            'user_count': user_count
+        }
+        return json.dumps(message_to_json)
+
+    def make_deleted_sign(self, room_no):
+        message_to_json = {
+            'room_no': room_no,
+            'room_status': room_constants.ROOM_DEL_STATUS,
+            'alter': room_constants.ROOM_DEL_ALTER,
+            'redirect': room_constants.ROOM_DEL_REDIRECT
+        }
+        return json.dumps(message_to_json)

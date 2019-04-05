@@ -69,7 +69,6 @@ class Room:
                 message = await redis_pub_sub.receive_message(self._subscription)
                 await ws.send(str(message.value))
             except ConnectionError:
-                print('connection error1')
                 await redis_pub_sub.unsubscibe_room(self._subscription, self.room_no)
                 await redis_set_get.del_hash_keys(self.connection, self.room_no, self.user_id)
 
