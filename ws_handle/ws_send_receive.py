@@ -16,6 +16,10 @@ async def ws_room_send_chat(ws, room, my_room, user_id):
             await redis_set_get.del_hash_keys(room.connection, my_room.room_no, user_id)
             break
 
+        except json.JSONDecodeError:
+            print('json 형식 아님')
+            break
+
         else:
             if 'from_id' in receive_data:
                 print('wispher chat')

@@ -1,5 +1,5 @@
 from redis_handle import redis_set_get, redis_pub_sub
-from channel import ResponseMessage
+from channel import response_message
 
 
 class Channel:
@@ -75,5 +75,5 @@ class Channel:
     async def notify_channel_info(self):
         user_count = await self.send_user_count()
         user_list = await self.send_user_list()
-        ResponseMessage.make_room_info(user_count, user_list)
+        response_message.ResponseMessage.make_room_info(user_count, user_list)
 
