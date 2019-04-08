@@ -17,8 +17,7 @@ async def ws_room_send_chat(ws, room, my_room, user_id):
             break
 
         except json.JSONDecodeError:
-            print('json 형식 아님')
-            break
+            await room.send_message("json data 아님")
 
         else:
             if 'from_id' in receive_data:
