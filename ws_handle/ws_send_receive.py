@@ -1,5 +1,5 @@
 from sanic.websocket import ConnectionClosed
-from room.response_message import ResponseMessage
+from channel.response_message import ResponseMessage
 from redis_handle import redis_set_get
 import json
 
@@ -10,8 +10,8 @@ async def ws_room_send_chat(ws, room, my_room, user_id):
             receive_data = json.loads(await ws.recv())
 
         except ConnectionClosed:
-            await room.leave_room(user_id)
-            await my_room.leave_room(user_id)
+            await room.leave_channel(user_id)
+            await my_room.leave_channel(user_id)
             await redis_set_get.del_hash_keys(room.connection, room.room_no, user_id)
             await redis_set_get.del_hash_keys(room.connection, my_room.room_no, user_id)
             break

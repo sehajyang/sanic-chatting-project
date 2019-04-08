@@ -3,7 +3,7 @@ from sanic_jinja2 import SanicJinja2
 from sanic.websocket import WebSocketProtocol
 from sanic.response import text
 import asyncio
-from room import Room
+from channel import Room
 from ws_handle import receive_ws_channel, ws_room_send_chat
 import sanic_session
 
@@ -53,8 +53,8 @@ async def room_chat(request, ws, room_no, user_id, user_name):
     room = Room(room_no)
     my_room = Room(room_no + ":" + user_id)
 
-    await room.join_room(user_id, user_name)
-    await my_room.join_room(user_id, user_name)
+    await room.join_channel(user_id, user_name)
+    await my_room.join_channel(user_id, user_name)
 
     # user_session = request['session']['user_session']
 

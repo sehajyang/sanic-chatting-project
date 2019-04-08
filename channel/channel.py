@@ -1,34 +1,34 @@
 from redis_handle import redis_set_get, redis_pub_sub
+from channel import ResponseMessage
 
 
-class Room:
+class Channel:
     def __init__(self, room_no):
         self.room_no = room_no
         self.is_connected = False
         self.connection = None
         self.protocol = None
         self._subscription = None
-        # FIXME: users redis에 넣기
         self.user_id = ""
 
     async def _connect(self):
         self.connection = await redis_pub_sub.get_redis_connection()
         self.is_connected = True
 
-    async def join_room(self, user_id, user_name):
+    async def join_channel(self, user_id, user_name):
         if not self.is_connected:
             await self._connect()
 
         self.user_id = user_id
         await redis_set_get.set_hash_data(self.connection, self.room_no, user_id, user_name)
-        self._subscription = await redis_pub_sub.subscribe_room(self.connection, self.room_no)
+        self._subscription = await redis_pub_sub.subscribe_channel(self.connection, self.room_no)
 
-    async def leave_room(self, user_id):
+    async def leave_channel(self, user_id):
         print('leave room')
         if not self.is_connected:
             await self._connect()
 
-        await redis_pub_sub.unsubscibe_room(self._subscription, self.room_no)
+        await redis_pub_sub.unsubscibe_channel(self._subscription, self.room_no)
         await redis_set_get.del_hash_keys(self.connection, self.room_no, user_id)
 
     async def send_message(self, message):
@@ -69,9 +69,11 @@ class Room:
                 message = await redis_pub_sub.receive_message(self._subscription)
                 await ws.send(str(message.value))
             except ConnectionError:
-                await redis_pub_sub.unsubscibe_room(self._subscription, self.room_no)
+                await redis_pub_sub.unsubscibe_channel(self._subscription, self.room_no)
                 await redis_set_get.del_hash_keys(self.connection, self.room_no, self.user_id)
 
-    async def notify_room_info(self):
-        pass
+    async def notify_channel_info(self):
+        user_count = await self.send_user_count()
+        user_list = await self.send_user_list()
+        ResponseMessage.make_room_info(user_count, user_list)
 
