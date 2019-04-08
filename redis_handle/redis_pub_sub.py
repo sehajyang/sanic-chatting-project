@@ -12,13 +12,13 @@ async def get_redis_connection():
                                                  port=int(os.environ['REDIS_PORT']))
 
 
-async def subscribe_room(connection, channel):
+async def subscribe_channel(connection, channel):
     subscription = await connection.start_subscribe()
     await subscription.subscribe(['Channel:{}'.format(channel)])
     return subscription
 
 
-async def unsubscibe_room(subscription: asyncio_redis.protocol.Subscription, channel):
+async def unsubscibe_channel(subscription: asyncio_redis.protocol.Subscription, channel):
     await subscription.unsubscribe(['Channel:{}'.format(channel)])
 
 

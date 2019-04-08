@@ -1,5 +1,5 @@
 import json
-from room import room_constants
+from channel import room_constants
 
 
 class ResponseMessage:
@@ -31,6 +31,7 @@ class ResponseMessage:
         }
         return json.dumps(message_to_json)
 
+    @staticmethod
     def make_room_info(user_list, user_count):
         message_to_json = {
             'user_list': user_list,
@@ -38,6 +39,7 @@ class ResponseMessage:
         }
         return json.dumps(message_to_json)
 
+    @staticmethod
     def make_deleted_sign(room_no):
         message_to_json = {
             'room_no': room_no,
