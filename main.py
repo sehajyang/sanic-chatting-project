@@ -61,6 +61,19 @@ async def player(request, room_no):
     }
 
 
+@app.route("/rooms/<room_no>", methods=["DETELE"])
+@jinja.template('room_list.html')
+async def player(request, room_no):
+    connection = await redis_pub_sub.get_redis_connection()
+    user_list = await redis_set_get.get_hash_all_value(room_no)
+    await redis_set_get.del_hash_keys(connection, room_no, user_list)
+
+    return {
+        "id": "seha",
+        "name": "sehajyang",
+    }
+
+
 # WebSocketServer
 @app.websocket('/rooms/<room_no>/<user_id>/<user_name>')
 async def room_chat(request, ws, room_no, user_id, user_name):

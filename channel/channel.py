@@ -61,8 +61,8 @@ class Channel:
 
         message = ''
         if notify_data_kind is 'room_info':
-            user_count = await redis_set_get.get_hash_all_value(self.room_no)
-            user_list = await redis_set_get.get_hash_data_len(self.room_no)
+            user_count = await redis_set_get.get_hash_data_len(self.room_no)
+            user_list = await redis_set_get.get_hash_all_value(self.room_no)
             message = response_message.ResponseMessage.make_room_info(user_count, user_list)
 
         elif notify_data_kind is 'rooms_lobby_data':
