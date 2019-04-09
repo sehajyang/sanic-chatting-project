@@ -48,3 +48,11 @@ class ResponseMessage:
             'redirect': room_constants.ROOM_DEL_REDIRECT
         }
         return json.dumps(message_to_json)
+
+    @staticmethod
+    def make_alter_sign(room_no, alter_message):
+        message_to_json = {
+            'room_no': room_no,
+            'alter': alter_message,
+        }
+        return json.dumps(message_to_json)

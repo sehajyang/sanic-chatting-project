@@ -1,10 +1,11 @@
-from sanic import Sanic
+from sanic import Sanic, response
 from sanic_jinja2 import SanicJinja2
 from sanic.websocket import WebSocketProtocol
 from sanic.response import text
 import asyncio
 from channel import Channel
 from ws_handle import receive_ws_channel, ws_room_send_chat
+from redis_handle import redis_set_get, redis_pub_sub
 import sanic_session
 
 app = Sanic()
@@ -37,9 +38,23 @@ async def player(request):
     return request['session']['user_session']
 
 
-@app.route("/lobby")
+@app.route("/lobby", methods=["GET"])
 @jinja.template('room_list.html')
 async def player(request):
+    room_list = await redis_set_get.get_hash_all_value('lobby')
+
+    return response.json({'room_list': room_list})
+
+
+# HTTP POST
+@app.route("/rooms/<room_no>", methods=["POST"])
+@jinja.template('room_list.html')
+async def player(request, room_no):
+    connection = await redis_pub_sub.get_redis_connection()
+    room_title = request.form.get('room_title')
+    room_password = request.form.get('room_password')
+    await redis_set_get.set_hash_data(connection, room_no, room_password, room_title)
+
     return {
         "id": "seha",
         "name": "sehajyang",

@@ -24,7 +24,6 @@ class Channel:
         self._subscription = await redis_pub_sub.subscribe_channel(self.connection, self.room_no)
 
     async def leave_channel(self, user_id):
-        print('leave room')
         if not self.is_connected:
             await self._connect()
 
@@ -56,14 +55,15 @@ class Channel:
                 await redis_pub_sub.unsubscibe_channel(self._subscription, self.room_no)
                 await redis_set_get.del_hash_keys(self.connection, self.room_no, self.user_id)
 
-    async def notify_room_info(self, notify_data_kind):
+    async def notify_channel_info(self, ws, notify_data_kind):
         if not self.is_connected:
             await self._connect()
 
+        message = ''
         if notify_data_kind is 'room_info':
-            user_list = await redis_set_get.get_hash_all_value(self.room_no)
-            user_count = await redis_set_get.get_hash_data_len(self.room_no)
-            message = response_message.ResponseMessage.make_room_info(user_list, user_count)
+            user_count = await redis_set_get.get_hash_all_value(self.room_no)
+            user_list = await redis_set_get.get_hash_data_len(self.room_no)
+            message = response_message.ResponseMessage.make_room_info(user_count, user_list)
 
         elif notify_data_kind is 'rooms_lobby_data':
             pass
@@ -71,9 +71,10 @@ class Channel:
         elif notify_data_kind is 'room_deleted':
             message = response_message.ResponseMessage.make_deleted_sign(self.room_no)
 
-    async def notify_channel_info(self):
-        user_count = await redis_set_get.get_hash_all_value(self.room_no)
-        user_list = await redis_set_get.get_hash_data_len(self.room_no)
-        message = await response_message.ResponseMessage.make_room_info(user_count, user_list)
+        elif notify_data_kind is 'data_not_json':
+            print('a')
+            message = response_message.ResponseMessage.make_alter_sign(self.room_no, 'JSON 타입이 아닙니다')
 
-        await redis_pub_sub.send_message(self.room_no, str(message))
+        await ws.send(str(message))
+
+

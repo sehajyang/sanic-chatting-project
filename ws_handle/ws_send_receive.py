@@ -17,7 +17,7 @@ async def ws_room_send_chat(ws, room, my_room, user_id):
             break
 
         except json.JSONDecodeError:
-            await room.send_message("json data 아님")
+            await room.notify_channel_info(ws, 'data_not_json')
 
         else:
             if 'from_id' in receive_data:
@@ -28,7 +28,7 @@ async def ws_room_send_chat(ws, room, my_room, user_id):
 
             elif 'query' in receive_data:
                 print('noti chat')
-                await room.notify_room_info('room_info')
+                await room.notify_channel_info(ws, 'room_info')
 
             else:
                 print('room chat')
