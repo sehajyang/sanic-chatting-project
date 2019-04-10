@@ -73,6 +73,7 @@ class Channel:
         elif notify_data_kind is 'rooms_lobby_data':
             pass
 
+        # 채팅방 안에서 방 삭제
         elif notify_data_kind is 'room_deleted':
             message = response_message.ResponseMessage.make_deleted_sign(self.room_no)
 

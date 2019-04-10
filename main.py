@@ -1,12 +1,11 @@
 import asyncio
 
 from sanic import Sanic, response
-from sanic.response import text
 from sanic.websocket import WebSocketProtocol
 from sanic_auth import Auth, User
 from sanic_jinja2 import SanicJinja2
 
-from channel import Channel
+from channel import Channel, response_message
 from redis_handle import redis_set_get, redis_pub_sub
 from ws_handle import receive_ws_channel, ws_room_send_chat
 
@@ -45,7 +44,6 @@ async def player(request):
 @app.route('/login', methods=['GET', 'POST'])
 @jinja.template('login.html')
 async def login(request):
-    message = ''
     if request.method == 'POST':
         id = request.form.get('id')
         password = request.form.get('password')
@@ -53,7 +51,7 @@ async def login(request):
         print('id', id, 'pwd', password, 'name', name)
 
         get_password = await redis_set_get.get_hash_value('users', id)
-        print('get_password',get_password)
+        print('get_password', get_password)
 
         # TODO: redis get_id and get_pwd
         if password == get_password:
@@ -83,6 +81,7 @@ async def join(request):
                 return {'message': '이미 존재하는 회원입니다'}
         except ConnectionError:
             return {'message': '회원가입에 실패했습니다'}
+
     else:
         return {'message': '회원가입 페이지입니다'}
 
@@ -90,6 +89,7 @@ async def join(request):
 @app.route('/logout')
 async def logout(request):
     auth.logout_user(request)
+
     return response.redirect('/login')
 
 
@@ -118,6 +118,7 @@ async def player(request, room_no):
         await redis_set_get.set_hash_data(connection, 'rooms', room_no, room_title)
         message = '방을 생성했습니다 방 번호: ', room_no
     except Exception:
+        # FIXME: 구린 Exception
         message = '방 생성에 실패했습니다'
 
     return {
@@ -125,14 +126,20 @@ async def player(request, room_no):
     }
 
 
+# 로비에서 삭제
 @app.route("/rooms/<room_no>/delete", methods=["POST"])
 @jinja.template('room_list.html')
 async def player(request, room_no):
-    await redis_set_get.del_hash_keys('rooms', [room_no])
+    message = response_message.ResponseMessage.make_deleted_sign(room_no)
+    await redis_pub_sub.send_message(room_no, message)
+    del_result = await redis_set_get.del_hash_keys('rooms', [room_no])
+    print(del_result)
 
-    return {
-        "message": "방을 삭제했습니다"
-    }
+    #FIXME: Exception 처리가 좋을듯
+    if del_result != 0:
+        return {"message": "방을 삭제했습니다"}
+    else:
+        return {"message": "방 삭제에 실패했습니다"}
 
 
 # WebSocketServer
