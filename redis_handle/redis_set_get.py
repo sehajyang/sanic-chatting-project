@@ -25,5 +25,9 @@ async def get_hash_all_value(hash_title):
     return await connection.hgetall_asdict(hash_title)
 
 
-async def del_hash_keys(connection, hash_title, key):
-    return await connection.hdel(hash_title, key)
+async def del_hash_keys(connection, hash_title, keys):
+    return await connection.hdel(hash_title, keys)
+
+
+async def del_hash_title(connection, hash_title):
+    return await connection.delete([hash_title])
