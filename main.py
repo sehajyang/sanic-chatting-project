@@ -1,21 +1,30 @@
-from sanic import Sanic, response
-from sanic_jinja2 import SanicJinja2
-from sanic.websocket import WebSocketProtocol
-from sanic.response import text
 import asyncio
-from channel import Channel
-from ws_handle import receive_ws_channel, ws_room_send_chat
-from redis_handle import redis_set_get, redis_pub_sub
-import sanic_session
 
-app = Sanic()
+from sanic import Sanic, response
+from sanic.response import text
+from sanic.websocket import WebSocketProtocol
+from sanic_auth import Auth, User
+from sanic_jinja2 import SanicJinja2
+
+from channel import Channel
+from redis_handle import redis_set_get, redis_pub_sub
+from ws_handle import receive_ws_channel, ws_room_send_chat
+
+session = {}
+app = Sanic(__name__)
+app.config.AUTH_LOGIN_ENDPOINT = 'login'
+auth = Auth(app)
 jinja = SanicJinja2(app, pkg_path='template')
-sanic_session.install_middleware(app, 'InMemorySessionInterface')
 
 
 @app.listener('before_server_start')
 async def setup(app, loop):
     pass
+
+
+@app.middleware('request')
+async def add_session(request):
+    request['session'] = session
 
 
 @app.middleware('response')
@@ -29,21 +38,41 @@ async def allow_cross_site(request, response):
 @app.route("/", methods=['GET'])
 @jinja.template('main.html')
 async def player(request):
-    if not request['session'].get('user_session'):
-        request['session']['user_session'] = 0
+    return text('hello world')
 
-    request['session']['user_session'] += 1
 
-    print(text(request['session']['user_session']))
-    return request['session']['user_session']
+@app.route('/login', methods=['GET', 'POST'])
+async def login(request):
+    message = ''
+    if request.method == 'POST':
+        id = request.form.get('id')
+        password = request.form.get('password')
+        # TODO: redis get_id and get_pwd
+        if id == 'seha' and password == '1234':
+            user = User(id='seha', name='세하쟝')
+            auth.login_user(request, user)
+            return response.redirect('/')
+        message = 'LOGIN FAIL'
+    return response.json({'message': message})
+
+
+@app.route('/logout')
+async def logout(request):
+    auth.logout_user(request)
+    return response.redirect('/login')
 
 
 @app.route("/lobby", methods=["GET"])
+@auth.login_required(user_keyword='user')
 @jinja.template('room_list.html')
-async def player(request):
+async def lobby(request, user):
     room_list = await redis_set_get.get_hash_all_value('lobby')
 
-    return response.json({'room_list': room_list})
+    return response.json({"room_list": room_list, "user_name": user.name})
+
+
+def handle_no_auth(request):
+    return response.json(dict(message='unauthorized'), status=401)
 
 
 # HTTP POST
@@ -53,15 +82,18 @@ async def player(request, room_no):
     connection = await redis_pub_sub.get_redis_connection()
     room_title = request.form.get('room_title')
     room_password = request.form.get('room_password')
-    await redis_set_get.set_hash_data(connection, room_no, room_password, room_title)
+
+    try:
+        message = await redis_set_get.set_hash_data(connection, room_no, room_password, room_title)
+    except Exception:
+        message = '방 생성에 실패했습니다'
 
     return {
-        "id": "seha",
-        "name": "sehajyang",
+        "message": message
     }
 
 
-@app.route("/rooms/<room_no>", methods=["DETELE"])
+@app.route("/rooms/<room_no>/delete", methods=["POST"])
 @jinja.template('room_list.html')
 async def player(request, room_no):
     connection = await redis_pub_sub.get_redis_connection()
@@ -69,8 +101,7 @@ async def player(request, room_no):
     await redis_set_get.del_hash_keys(connection, room_no, user_list)
 
     return {
-        "id": "seha",
-        "name": "sehajyang",
+        "message": "방을 삭제했습니다"
     }
 
 
