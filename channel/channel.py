@@ -20,6 +20,8 @@ class Channel:
             await self._connect()
 
         self.user_id = user_id
+        message = f'{user_id}님이 입장했습니다.'
+        await redis_pub_sub.send_message(self.room_no, message)
         await redis_set_get.set_hash_data(self.connection, self.room_no, user_id, user_name)
         self._subscription = await redis_pub_sub.subscribe_channel(self.connection, self.room_no)
 
@@ -27,8 +29,10 @@ class Channel:
         if not self.is_connected:
             await self._connect()
 
+        message = f'{user_id}님이 나갔습니다.'
+        await redis_pub_sub.send_message(self.room_no, message)
         await redis_pub_sub.unsubscibe_channel(self._subscription, self.room_no)
-        await redis_set_get.del_hash_keys(self.connection, self.room_no, user_id)
+        await redis_set_get.del_hash_keys(self.room_no, [user_id])
 
     async def send_message(self, message):
         if not self.is_connected:
@@ -52,8 +56,9 @@ class Channel:
                 message = await redis_pub_sub.receive_message(self._subscription)
                 await ws.send(str(message.value))
             except ConnectionError:
+                pass
                 await redis_pub_sub.unsubscibe_channel(self._subscription, self.room_no)
-                await redis_set_get.del_hash_keys(self.connection, self.room_no, self.user_id)
+                await redis_set_get.del_hash_keys(self.room_no, [self.user_id])
 
     async def notify_channel_info(self, ws, notify_data_kind):
         if not self.is_connected:
@@ -76,5 +81,3 @@ class Channel:
             message = response_message.ResponseMessage.make_alter_sign(self.room_no, 'JSON 타입이 아닙니다')
 
         await ws.send(str(message))
-
-

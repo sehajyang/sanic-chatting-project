@@ -1,7 +1,9 @@
-from sanic.websocket import ConnectionClosed
+import json
+
+from websockets import ConnectionClosed
+
 from channel.response_message import ResponseMessage
 from redis_handle import redis_set_get
-import json
 
 
 async def ws_room_send_chat(ws, room, my_room, user_id):
@@ -9,11 +11,12 @@ async def ws_room_send_chat(ws, room, my_room, user_id):
         try:
             receive_data = json.loads(await ws.recv())
 
+        # XXX: 버그 발생해서 임시 주석 처리
         except ConnectionClosed:
             await room.leave_channel(user_id)
             await my_room.leave_channel(user_id)
-            await redis_set_get.del_hash_keys(room.connection, room.room_no, user_id)
-            await redis_set_get.del_hash_keys(room.connection, my_room.room_no, user_id)
+            await redis_set_get.del_hash_keys(room.room_no, [user_id])
+            await redis_set_get.del_hash_keys(my_room.room_no, [user_id])
             break
 
         except json.JSONDecodeError:
@@ -37,4 +40,12 @@ async def ws_room_send_chat(ws, room, my_room, user_id):
 
 async def receive_ws_channel(room, ws):
     while True:
-        await room.receive_message(ws)
+        try:
+            await room.receive_message(ws)
+
+        except ConnectionClosed:
+            break
+
+
+
+

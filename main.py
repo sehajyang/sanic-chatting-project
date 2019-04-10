@@ -41,6 +41,7 @@ async def player(request):
     return {'message': 'hello world'}
 
 
+# XXX: user 정보는 redis가 아니고 rdb에 저장해야됨
 @app.route('/login', methods=['GET', 'POST'])
 @jinja.template('login.html')
 async def login(request):
@@ -48,16 +49,42 @@ async def login(request):
     if request.method == 'POST':
         id = request.form.get('id')
         password = request.form.get('password')
-        print('id', id, 'pwd', password)
+        name = request.form.get('name')
+        print('id', id, 'pwd', password, 'name', name)
+
+        get_password = await redis_set_get.get_hash_value('users', id)
+        print('get_password',get_password)
+
         # TODO: redis get_id and get_pwd
-        if id == 'seha' and password == '1234':
-            user = User(id='seha', name='세하쟝')
+        if password == get_password:
+            print(password, get_password)
+            user = User(id=id, name=name)
             auth.login_user(request, user)
             return response.redirect('/lobby')
-        message = 'LOGIN FAIL'
-        return {'message': message}
+        else:
+            return {'message': 'LOGIN FAIL'}
     else:
         return {'message': '로그인 페이지입니다'}
+
+
+# FIXME: 구린코드 주의
+@app.route('/join', methods=['GET', 'POST'])
+@jinja.template('join.html')
+async def join(request):
+    if request.method == 'POST':
+        try:
+            connection = await redis_pub_sub.get_redis_connection()
+            id = request.form.get('id')
+            password = request.form.get('password')
+            result = await redis_set_get.set_hash_data(connection, 'users', id, password)
+            if result is not 0:
+                return response.redirect('/login')
+            else:
+                return {'message': '이미 존재하는 회원입니다'}
+        except ConnectionError:
+            return {'message': '회원가입에 실패했습니다'}
+    else:
+        return {'message': '회원가입 페이지입니다'}
 
 
 @app.route('/logout')
@@ -101,8 +128,7 @@ async def player(request, room_no):
 @app.route("/rooms/<room_no>/delete", methods=["POST"])
 @jinja.template('room_list.html')
 async def player(request, room_no):
-    connection = await redis_pub_sub.get_redis_connection()
-    await redis_set_get.del_hash_keys(connection, 'rooms', [room_no])
+    await redis_set_get.del_hash_keys('rooms', [room_no])
 
     return {
         "message": "방을 삭제했습니다"
