@@ -6,7 +6,8 @@ from sanic_auth import Auth, User
 from sanic_jinja2 import SanicJinja2
 
 from channel import Channel, response_message
-from redis_handle import redis_set_get, redis_pub_sub
+from redis_handle import redis_pub_sub
+from db_driver import redis_set_get, pg_set_get
 from ws_handle import receive_ws_channel, ws_room_send_chat
 
 session = {}
@@ -40,7 +41,6 @@ async def player(request):
     return {'message': 'hello world'}
 
 
-# XXX: user 정보는 redis가 아니고 rdb에 저장해야됨
 @app.route('/login', methods=['GET', 'POST'])
 @jinja.template('login.html')
 async def login(request):
@@ -50,7 +50,7 @@ async def login(request):
         name = request.form.get('name')
         print('id', id, 'pwd', password, 'name', name)
 
-        get_password = await redis_set_get.get_hash_value('users', id)
+        get_password = await pg_set_get.get_user_password_by_id(id)
         print('get_password', get_password)
 
         # TODO: redis get_id and get_pwd
@@ -58,6 +58,7 @@ async def login(request):
             print(password, get_password)
             user = User(id=id, name=name)
             auth.login_user(request, user)
+
             return response.redirect('/lobby')
         else:
             return {'message': 'LOGIN FAIL'}
@@ -71,10 +72,11 @@ async def login(request):
 async def join(request):
     if request.method == 'POST':
         try:
-            connection = await redis_pub_sub.get_redis_connection()
             id = request.form.get('id')
             password = request.form.get('password')
-            result = await redis_set_get.set_hash_data(connection, 'users', id, password)
+            name = request.form.get('name')
+            result = await pg_set_get.set_user_data(id, password, name)
+
             if result is not 0:
                 return response.redirect('/login')
             else:

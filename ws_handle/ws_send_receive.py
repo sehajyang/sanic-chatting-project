@@ -3,7 +3,7 @@ import json
 from websockets import ConnectionClosed
 
 from channel.response_message import ResponseMessage
-from redis_handle import redis_set_get
+from db_driver import redis_set_get
 
 
 async def ws_room_send_chat(ws, room, my_room, user_id):
@@ -11,7 +11,6 @@ async def ws_room_send_chat(ws, room, my_room, user_id):
         try:
             receive_data = json.loads(await ws.recv())
 
-        # XXX: 버그 발생해서 임시 주석 처리
         except ConnectionClosed:
             await room.leave_channel(user_id)
             await my_room.leave_channel(user_id)

@@ -1,4 +1,5 @@
-from redis_handle import redis_set_get, redis_pub_sub
+from redis_handle import redis_pub_sub
+from db_driver import redis_set_get
 from channel import response_message
 
 

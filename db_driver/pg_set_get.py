@@ -13,7 +13,7 @@ async def get_pg_connection():
 
 async def get_user_password_by_id(id):
     return await get_pg_connection().fetch(
-        'SELECT * FROM users WHERE id = $id', id
+        'SELECT password FROM users WHERE id = $id', id
         )
 
 
