@@ -51,7 +51,6 @@ async def login(request):
         print('id', id, 'pwd', password, 'name', name)
 
         get_password = await pg_set_get.get_user_password_by_id(id)
-        print('get_password', get_password)
 
         # TODO: redis get_id and get_pwd
         if password == get_password:
