@@ -4,8 +4,8 @@
 
 ## Skills
 front-end : Vue  
-back-end : Python(sanic)
-DB : Redis, PostgreSQL
+back-end : Python(sanic)  
+DB : Redis, PostgreSQL  
 IDE : PyCharm  
 
 ## Doc
