@@ -6,7 +6,7 @@ from channel.response_message import ResponseMessage
 from db_driver import redis_set_get
 
 
-async def ws_room_send_chat(ws, room, my_room, user_id):
+async def ws_room_send_chat(conn, ws, room, my_room, user_id):
     while True:
         try:
             receive_data = json.loads(await ws.recv())
@@ -14,8 +14,8 @@ async def ws_room_send_chat(ws, room, my_room, user_id):
         except ConnectionClosed:
             await room.leave_channel(user_id)
             await my_room.leave_channel(user_id)
-            await redis_set_get.del_hash_keys(room.room_no, [user_id])
-            await redis_set_get.del_hash_keys(my_room.room_no, [user_id])
+            await redis_set_get.del_hash_keys(conn, room.room_no, [user_id])
+            await redis_set_get.del_hash_keys(conn, my_room.room_no, [user_id])
             break
 
         except json.JSONDecodeError:
@@ -30,21 +30,17 @@ async def ws_room_send_chat(ws, room, my_room, user_id):
 
             elif 'query' in receive_data:
                 print('noti chat')
-                await room.notify_channel_info(ws, 'room_info')
+                await room.notify_channel_info(conn, ws, 'room_info')
 
             else:
                 print('room chat')
                 await room.send_message(receive_data)
 
 
-async def receive_ws_channel(room, ws):
+async def receive_ws_channel(room, conn, ws):
     while True:
         try:
-            await room.receive_message(ws)
+            await room.receive_message(conn, ws)
 
         except ConnectionClosed:
             break
-
-
-
-

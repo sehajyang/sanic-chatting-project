@@ -1,6 +1,6 @@
-from redis_handle import redis_pub_sub
-from db_driver import redis_set_get
 from channel import response_message
+from db_driver import redis_set_get
+from redis_handle import redis_pub_sub
 
 
 class Channel:
@@ -26,14 +26,14 @@ class Channel:
         await redis_set_get.set_hash_data(self.connection, self.room_no, user_id, user_name)
         self._subscription = await redis_pub_sub.subscribe_channel(self.connection, self.room_no)
 
-    async def leave_channel(self, user_id):
+    async def leave_channel(self, conn, user_id):
         if not self.is_connected:
             await self._connect()
 
         message = f'{user_id}님이 나갔습니다.'
         await redis_pub_sub.send_message(self.room_no, message)
         await redis_pub_sub.unsubscibe_channel(self._subscription, self.room_no)
-        await redis_set_get.del_hash_keys(self.room_no, [user_id])
+        await redis_set_get.del_hash_keys(conn, self.room_no, [user_id])
 
     async def send_message(self, message):
         if not self.is_connected:
@@ -48,7 +48,7 @@ class Channel:
         room_no = str(self.room_no)[:str(self.room_no).find(":")]
         return await redis_pub_sub.send_message(room_no + ":" + from_id, message)
 
-    async def receive_message(self, ws):
+    async def receive_message(self, conn, ws):
         if not self.is_connected:
             await self._connect()
 
@@ -57,18 +57,17 @@ class Channel:
                 message = await redis_pub_sub.receive_message(self._subscription)
                 await ws.send(str(message.value))
             except ConnectionError:
-                pass
                 await redis_pub_sub.unsubscibe_channel(self._subscription, self.room_no)
-                await redis_set_get.del_hash_keys(self.room_no, [self.user_id])
+                await redis_set_get.del_hash_keys(conn, self.room_no, [self.user_id])
 
-    async def notify_channel_info(self, ws, notify_data_kind):
+    async def notify_channel_info(self, conn, ws, notify_data_kind):
         if not self.is_connected:
             await self._connect()
 
         message = ''
         if notify_data_kind is 'room_info':
-            user_count = await redis_set_get.get_hash_data_len(self.room_no)
-            user_list = await redis_set_get.get_hash_all_value(self.room_no)
+            user_count = await redis_set_get.get_hash_data_len(conn, self.room_no)
+            user_list = await redis_set_get.get_hash_all_value(conn, self.room_no)
             message = response_message.ResponseMessage.make_room_info(user_count, user_list)
 
         elif notify_data_kind is 'rooms_lobby_data':

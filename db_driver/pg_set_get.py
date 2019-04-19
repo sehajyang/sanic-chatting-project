@@ -20,7 +20,7 @@ async def get_user_password_by_id(id):
 
 
 # TODO: 파라미터 이렇게 넘기지 말 것
-async def set_user_data(user_id, name, password):
+async def set_user_data(user_id, password, name):
     conn = await get_pg_connection()
     row = await conn.execute('''
             INSERT INTO users(user_id, password, name) VALUES($1, $2, $3)

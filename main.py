@@ -19,7 +19,12 @@ jinja = SanicJinja2(app, pkg_path='template')
 
 @app.listener('before_server_start')
 async def setup(app, loop):
-    pass
+    app.conn = await redis_pub_sub.get_redis_connection()
+
+
+@app.listener('after_server_stop')
+async def close_db(app, loop):
+    await app.conn.close()
 
 
 @app.middleware('request')
@@ -98,7 +103,7 @@ async def logout(request):
 @auth.login_required(user_keyword='user')
 @jinja.template('room_list.html')
 async def lobby(request, user):
-    room_list = await redis_set_get.get_hash_all_value('rooms')
+    room_list = await redis_set_get.get_hash_all_value(app.conn, 'rooms')
 
     return {"room_list": room_list, "user_name": user.name}
 
@@ -111,12 +116,11 @@ def handle_no_auth(request):
 @app.route("/rooms/<room_no>", methods=["POST"])
 @jinja.template('room_list.html')
 async def player(request, room_no):
-    connection = await redis_pub_sub.get_redis_connection()
     room_title = request.form.get('room_title')
     room_password = request.form.get('room_password')
 
     try:
-        await redis_set_get.set_hash_data(connection, 'rooms', room_no, room_title)
+        await redis_set_get.set_hash_data(app.conn, 'rooms', room_no, room_title)
         message = '방을 생성했습니다 방 번호: ', room_no
     except Exception:
         # FIXME: 구린 Exception
@@ -133,10 +137,10 @@ async def player(request, room_no):
 async def player(request, room_no):
     message = response_message.ResponseMessage.make_deleted_sign(room_no)
     await redis_pub_sub.send_message(room_no, message)
-    del_result = await redis_set_get.del_hash_keys('rooms', [room_no])
+    del_result = await redis_set_get.del_hash_keys(app.conn, 'rooms', [room_no])
     print(del_result)
 
-    #FIXME: Exception 처리가 좋을듯
+    # FIXME: Exception 처리가 좋을듯
     if del_result != 0:
         return {"message": "방을 삭제했습니다"}
     else:
@@ -153,9 +157,9 @@ async def room_chat(request, ws, room_no, user_id, user_name):
     await room.join_channel(user_id, user_name)
     await my_room.join_channel(user_id, user_name)
 
-    send_task = asyncio.create_task(ws_room_send_chat(ws, room, my_room, user_id))
-    receive_task = asyncio.create_task(receive_ws_channel(room, ws))
-    my_room_receive_task = asyncio.create_task(receive_ws_channel(my_room, ws))
+    send_task = asyncio.create_task(ws_room_send_chat(app.conn, ws, room, my_room, user_id))
+    receive_task = asyncio.create_task(receive_ws_channel(app.conn, room, ws))
+    my_room_receive_task = asyncio.create_task(receive_ws_channel(app.conn, my_room, ws))
     done, pending = await asyncio.wait(
         [send_task, receive_task, my_room_receive_task],
         return_when=asyncio.FIRST_COMPLETED
