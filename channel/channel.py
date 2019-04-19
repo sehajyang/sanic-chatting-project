@@ -80,6 +80,6 @@ class Channel:
 
         elif notify_data_kind is 'data_not_json':
             print('a')
-            message = response_message.ResponseMessage.make_alter_sign(self.room_no, 'JSON 타입이 아닙니다')
+            message = response_message.ResponseMessage.make_alter_sign(self.room_no, 'IS NOT JSON TYPE')
 
         await ws.send(str(message))

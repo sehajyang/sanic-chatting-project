@@ -8,8 +8,8 @@ dotenv.load_dotenv()
 
 
 async def get_redis_connection():
-    return await asyncio_redis.Connection.create(host=os.environ['REDIS_HOST'],
-                                                 port=int(os.environ['REDIS_PORT']))
+    return await asyncio_redis.Pool.create(host=os.environ['REDIS_HOST'], port=int(os.environ['REDIS_PORT']),
+                                           poolsize=int(os.environ['REDIS_POOL_SIZE']))
 
 
 async def subscribe_channel(connection, channel):
