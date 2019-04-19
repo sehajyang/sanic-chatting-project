@@ -1,32 +1,32 @@
 
 
-async def set_hash_data(conn, hash_title, key, value):
-    return await conn.hset(hash_title, key, value)
+async def set_hash_data(app, hash_title, key, value):
+    return await app.conn.hset(hash_title, key, value)
 
 
-async def get_hash_data_len(conn, hash_title):
-    return await conn.hlen(hash_title)
+async def get_hash_data_len(app, hash_title):
+    return await app.conn.hlen(hash_title)
 
 
-async def get_all_hash_title(conn, hash_title):
-    return await conn.hkeys(hash_title)
+async def get_all_hash_title(app, hash_title):
+    return await app.conn.hkeys(hash_title)
 
 
-async def get_hash_value_by_key(conn, hash_title, key):
-    return await conn.hget(hash_title, key)
+async def get_hash_value_by_key(app, hash_title, key):
+    return await app.conn.hget(hash_title, key)
 
 
-async def get_hash_all_value(conn, hash_title):
-    return await conn.hgetall_asdict(hash_title)
+async def get_hash_all_value(app, hash_title):
+    return await app.conn.hgetall_asdict(hash_title)
 
 
-async def get_hash_value(conn, hash_title, key):
-    return await conn.hget(hash_title, key)
+async def get_hash_value(app, hash_title, key):
+    return await app.conn.hget(hash_title, key)
 
 
-async def del_hash_keys(conn, hash_title, keys):
-    return await conn.hdel(hash_title, keys)
+async def del_hash_keys(app, hash_title, keys):
+    return await app.conn.hdel(hash_title, keys)
 
 
-async def del_hash_title(conn, hash_title):
-    return await conn.delete([hash_title])
+async def del_hash_title(app, hash_title):
+    return await app.conn.delete([hash_title])

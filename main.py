@@ -4,6 +4,7 @@ from sanic import Sanic, response
 from sanic.websocket import WebSocketProtocol
 from sanic_auth import Auth, User
 from sanic_jinja2 import SanicJinja2
+import asyncio_redis
 
 from channel import Channel, response_message
 from redis_handle import redis_pub_sub
@@ -12,6 +13,7 @@ from ws_handle import receive_ws_channel, ws_room_send_chat
 
 session = {}
 app = Sanic(__name__)
+app: asyncio_redis.Pool
 app.config.AUTH_LOGIN_ENDPOINT = 'login'
 auth = Auth(app)
 jinja = SanicJinja2(app, pkg_path='template')
@@ -19,12 +21,12 @@ jinja = SanicJinja2(app, pkg_path='template')
 
 @app.listener('before_server_start')
 async def setup(app, loop):
-    app.conn = await redis_pub_sub.get_redis_connection()
+    app.conn = await redis_pub_sub.create_connection_pool()
 
 
 @app.listener('after_server_stop')
 async def close_db(app, loop):
-    await app.conn.close()
+    await app.close()
 
 
 @app.middleware('request')
@@ -103,7 +105,7 @@ async def logout(request):
 @auth.login_required(user_keyword='user')
 @jinja.template('room_list.html')
 async def lobby(request, user):
-    room_list = await redis_set_get.get_hash_all_value(app.conn, 'rooms')
+    room_list = await redis_set_get.get_hash_all_value(app, 'rooms')
 
     return {"room_list": room_list, "user_name": user.name}
 
@@ -120,7 +122,7 @@ async def player(request, room_no):
     room_password = request.form.get('room_password')
 
     try:
-        await redis_set_get.set_hash_data(app.conn, 'rooms', room_no, room_title)
+        await redis_set_get.set_hash_data(app, 'rooms', room_no, room_title)
         message = '방을 생성했습니다 방 번호: ', room_no
     except Exception:
         # FIXME: 구린 Exception
@@ -137,7 +139,7 @@ async def player(request, room_no):
 async def player(request, room_no):
     message = response_message.ResponseMessage.make_deleted_sign(room_no)
     await redis_pub_sub.send_message(room_no, message)
-    del_result = await redis_set_get.del_hash_keys(app.conn, 'rooms', [room_no])
+    del_result = await redis_set_get.del_hash_keys(app, 'rooms', [room_no])
     print(del_result)
 
     # FIXME: Exception 처리가 좋을듯
@@ -157,9 +159,9 @@ async def room_chat(request, ws, room_no, user_id, user_name):
     await room.join_channel(user_id, user_name)
     await my_room.join_channel(user_id, user_name)
 
-    send_task = asyncio.create_task(ws_room_send_chat(app.conn, ws, room, my_room, user_id))
-    receive_task = asyncio.create_task(receive_ws_channel(app.conn, room, ws))
-    my_room_receive_task = asyncio.create_task(receive_ws_channel(app.conn, my_room, ws))
+    send_task = asyncio.create_task(ws_room_send_chat(app, ws, room, my_room, user_id))
+    receive_task = asyncio.create_task(receive_ws_channel(app, room, ws))
+    my_room_receive_task = asyncio.create_task(receive_ws_channel(app, my_room, ws))
     done, pending = await asyncio.wait(
         [send_task, receive_task, my_room_receive_task],
         return_when=asyncio.FIRST_COMPLETED

@@ -7,7 +7,7 @@ import os
 dotenv.load_dotenv()
 
 
-async def get_redis_connection():
+async def create_connection_pool():
     return await asyncio_redis.Pool.create(host=os.environ['REDIS_HOST'], port=int(os.environ['REDIS_PORT']),
                                            poolsize=int(os.environ['REDIS_POOL_SIZE']))
 
@@ -27,6 +27,6 @@ async def receive_message(subscription: asyncio_redis.protocol.Subscription):
 
 
 async def send_message(channel, message):
-    connection = await get_redis_connection()
+    connection = await create_connection_pool()
     await connection.publish('Channel:{}'.format(channel), str(message))
     connection.close()
