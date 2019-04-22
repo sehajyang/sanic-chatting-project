@@ -12,18 +12,18 @@ async def ws_room_send_chat(app, ws, room, my_room, user_id):
             receive_data = json.loads(await ws.recv())
 
         except ConnectionClosed:
-            await room.leave_channel(user_id)
-            await my_room.leave_channel(user_id)
+            await my_room.leave_channel(app, user_id)
             await redis_set_get.del_hash_keys(app, room.room_no, [user_id])
             await redis_set_get.del_hash_keys(app, my_room.room_no, [user_id])
             break
 
         except json.JSONDecodeError:
-            await room.notify_channel_info(ws, 'data_not_json')
+            await room.notify_channel_info(app, ws, 'data_not_json')
 
         else:
             if 'from_id' in receive_data:
                 print('wispher chat')
+
                 msg = ResponseMessage(receive_data)
                 data_set_from_id = msg.make_whisper_message(user_id)
                 await my_room.send_message_to_user(receive_data['from_id'], data_set_from_id)

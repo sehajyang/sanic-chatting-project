@@ -124,9 +124,9 @@ async def player(request, room_no):
     try:
         await redis_set_get.set_hash_data(app, 'rooms', room_no, room_title)
         message = '방을 생성했습니다 방 번호: ', room_no
-    except Exception:
+    except Exception as e:
         # FIXME: 구린 Exception
-        message = '방 생성에 실패했습니다'
+        message = '방 생성에 실패했습니다 ', str(e),
 
     return {
         "message": message
@@ -156,12 +156,12 @@ async def room_chat(request, ws, room_no, user_id, user_name):
     room = Channel(room_no)
     my_room = Channel(room_no + ":" + user_id)
 
-    await room.join_channel(user_id, user_name)
-    await my_room.join_channel(user_id, user_name)
+    await room.join_channel(app, user_id, user_name)
+    await my_room.join_channel(app, user_id, user_name)
 
     send_task = asyncio.create_task(ws_room_send_chat(app, ws, room, my_room, user_id))
-    receive_task = asyncio.create_task(receive_ws_channel(app, room, ws))
-    my_room_receive_task = asyncio.create_task(receive_ws_channel(app, my_room, ws))
+    receive_task = asyncio.create_task(receive_ws_channel(room, app, ws))
+    my_room_receive_task = asyncio.create_task(receive_ws_channel(my_room, app, ws))
     done, pending = await asyncio.wait(
         [send_task, receive_task, my_room_receive_task],
         return_when=asyncio.FIRST_COMPLETED

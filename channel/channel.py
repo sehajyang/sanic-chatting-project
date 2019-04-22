@@ -16,14 +16,14 @@ class Channel:
         self.connection = await redis_pub_sub.create_connection_pool()
         self.is_connected = True
 
-    async def join_channel(self, user_id, user_name):
+    async def join_channel(self, app, user_id, user_name):
         if not self.is_connected:
             await self._connect()
 
         self.user_id = user_id
         message = f'{user_id}님이 입장했습니다.'
         await redis_pub_sub.send_message(self.room_no, message)
-        await redis_set_get.set_hash_data(self.connection, self.room_no, user_id, user_name)
+        await redis_set_get.set_hash_data(app, self.room_no, user_id, user_name)
         self._subscription = await redis_pub_sub.subscribe_channel(self.connection, self.room_no)
 
     async def leave_channel(self, app, user_id):
@@ -78,7 +78,6 @@ class Channel:
             message = response_message.ResponseMessage.make_deleted_sign(self.room_no)
 
         elif notify_data_kind is 'data_not_json':
-            print('a')
             message = response_message.ResponseMessage.make_alter_sign(self.room_no, 'IS NOT JSON TYPE')
 
         await ws.send(str(message))
