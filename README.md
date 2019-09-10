@@ -1,14 +1,32 @@
 # sanic-chatapp-toy-project  
-실시간 채팅 앱 서버   
-파이썬 `sanic` 프레임워크 + 웹소켓 + Redis + PostgreSQL  
-
-참여 인원 : 프론트(MC), 백엔드(나)
+realtime chatting application server  
+python `sanic` framework + websocket + Redis(pub/sub) + PostgreSQL(save for user data)  
 
 ## Skills
-front-end : -  
-back-end : Python(sanic)  
+back-end : Python(sanic) 
 DB : Redis, PostgreSQL  
 IDE : PyCharm  
 
 ## Doc
 [API Doc](https://github.com/sehajyang/sanic-toy-project/wiki)
+
+## require
+Python 3.7
+
+# How to run?
+1. install requirements
+```
+pip install -r requirements.txt
+```
+2. setting .env
+**environment variable**
+```
+* REDIS_HOST
+* REDIS_PORT
+* REDIS_POOL_SIZE
+* PG_USER
+* PG_PASSWORD
+* PG_DB
+* PG_HOST
+```
+3. run main.py
