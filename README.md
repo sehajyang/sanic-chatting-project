@@ -3,7 +3,7 @@ realtime chatting application server
 python `sanic` framework + websocket + Redis(pub/sub) + PostgreSQL(save for user data)  
 
 ## Skills
-back-end : Python(sanic) 
+back-end : Python(sanic)   
 DB : Redis, PostgreSQL  
 IDE : PyCharm  
 
