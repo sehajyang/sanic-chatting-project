@@ -33,7 +33,7 @@ pickleshare==0.7.5
 prometheus-client==0.5.0
 prompt-toolkit==2.0.8
 pygame==1.9.5
-Pygments==2.3.1
+Pygments==2.7.4
 pylint==2.1.1
 python-dateutil==2.7.5
 pywinpty==0.5.5
